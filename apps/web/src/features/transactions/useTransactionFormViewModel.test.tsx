@@ -10,6 +10,10 @@ const seeded = () =>
       { name: "Checking", type: "checking", initialBalanceCents: 0 },
       { name: "Savings", type: "savings", initialBalanceCents: 0 },
     ],
+    categories: [
+      { name: "Food", kind: "expense" },
+      { name: "Salary", kind: "both" },
+    ],
   });
 
 const setup = async (repo = seeded(), options: Parameters<typeof useTransactionFormViewModel>[0] = {}) => {
@@ -69,7 +73,7 @@ describe("useTransactionFormViewModel", () => {
   it("prefills when editing and updates instead of creating", async () => {
     const repo = seeded();
     const existing = await repo.createTransaction({
-      kind: "income", amountCents: 250000, date: "2026-10-02", accountId: 1, toAccountId: null,
+      kind: "income", amountCents: 250000, date: "2026-10-02", accountId: 1, toAccountId: null, categoryId: null,
       description: "Salary", status: "scheduled", personId: 2,
     });
     repo.calls.length = 0;
@@ -78,5 +82,32 @@ describe("useTransactionFormViewModel", () => {
     act(() => result.current.setField("description", "Salary Oct"));
     await act(async () => { await result.current.submit(); });
     expect(repo.calls).toEqual(["updateTransaction"]);
+  });
+
+  it("offers only categories that fit the transaction kind", async () => {
+    const { result } = await setup();
+    await waitFor(() => expect(result.current.categories).toHaveLength(2));
+    expect(result.current.categories.map((c) => c.name)).toEqual(["Food", "Salary"]);
+    act(() => result.current.setField("kind", "income"));
+    expect(result.current.categories.map((c) => c.name)).toEqual(["Salary"]);
+    act(() => result.current.setField("kind", "transfer"));
+    expect(result.current.categories).toEqual([]);
+  });
+
+  it("clears an incompatible category when the kind changes", async () => {
+    const { result } = await setup();
+    await waitFor(() => expect(result.current.categories).toHaveLength(2));
+    act(() => result.current.setField("categoryId", 1));
+    act(() => result.current.setField("kind", "income"));
+    expect(result.current.values.categoryId).toBeNull();
+  });
+
+  it("saves the chosen category", async () => {
+    const { result, repo } = await setup();
+    await waitFor(() => expect(result.current.categories).toHaveLength(2));
+    act(() => { result.current.setField("amountText", "30"); result.current.setField("categoryId", 1); });
+    await act(async () => { await result.current.submit(); });
+    const [saved] = await repo.listTransactions({ month: "2026-10" });
+    expect(saved?.categoryId).toBe(1);
   });
 });

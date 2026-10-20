@@ -67,7 +67,7 @@ describe("main flows", () => {
     const user = userEvent.setup();
     const repo = seeded();
     await repo.createTransaction({
-      kind: "expense", amountCents: 5000, date: today, accountId: 1, toAccountId: null,
+      kind: "expense", amountCents: 5000, date: today, accountId: 1, toAccountId: null, categoryId: null,
       description: "Padaria", status: "settled", personId: 1,
     });
     renderWithProviders(<App />, repo, "/transactions");
@@ -80,5 +80,56 @@ describe("main flows", () => {
     await user.click(await screen.findByRole("button", { name: /Padaria do João/ }));
     await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Excluir" }));
     await waitFor(() => expect(screen.getByText("Nenhum lançamento neste mês.")).toBeInTheDocument());
+  });
+});
+
+describe("budget flow", () => {
+  it("creates a category with a budget, records an expense and shows progress", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, seeded());
+    await user.click(screen.getByRole("link", { name: "Orçamento" }));
+
+    await user.click(await screen.findByRole("button", { name: "Nova categoria" }));
+    let dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByLabelText("Nome"), "Mercado");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    await user.click(await screen.findByRole("button", { name: /Mercado/ }));
+    dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByLabelText("Valor mensal"), "800,00");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: "Novo lançamento" }));
+    dialog = await screen.findByRole("dialog");
+    await within(dialog).findByRole("option", { name: "Mercado" });
+    await user.type(within(dialog).getByLabelText("Valor"), "200,00");
+    await user.selectOptions(within(dialog).getByLabelText("Categoria"), "Mercado");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    const bar = await screen.findByRole("progressbar", { name: "Mercado" });
+    await waitFor(() => expect(bar).toHaveAttribute("aria-valuenow", "25"));
+    const row = screen.getByRole("button", { name: /Mercado/ });
+    expect(nbsp(row.textContent!)).toContain("Restante: R$ 600,00");
+    expect(row.textContent).toContain("25% usado");
+  });
+
+  it("offers income categories only for income and hides the field for transfers", async () => {
+    const user = userEvent.setup();
+    const repo = createFakeRepository({
+      accounts: [{ name: "Conta Itaú", type: "checking", initialBalanceCents: 0 }],
+      categories: [{ name: "Mercado", kind: "expense" }, { name: "Salário", kind: "both" }],
+    });
+    renderWithProviders(<App />, repo);
+    await user.click(screen.getByRole("button", { name: "Novo lançamento" }));
+    const dialog = await screen.findByRole("dialog");
+    const select = await within(dialog).findByLabelText("Categoria");
+    expect(within(select).getAllByRole("option").map((o) => o.textContent)).toEqual(["Sem categoria", "Mercado", "Salário"]);
+    await user.click(within(dialog).getByRole("radio", { name: "Receita" }));
+    expect(within(within(dialog).getByLabelText("Categoria")).getAllByRole("option").map((o) => o.textContent)).toEqual(["Sem categoria", "Salário"]);
+    await user.click(within(dialog).getByRole("radio", { name: "Transferência" }));
+    expect(within(dialog).queryByLabelText("Categoria")).not.toBeInTheDocument();
   });
 });

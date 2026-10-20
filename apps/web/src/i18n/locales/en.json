@@ -75,7 +75,9 @@
     "filterAccount": "Filter by account",
     "filterPerson": "Filter by person",
     "incomeTotal": "Income",
-    "expenseTotal": "Expenses"
+    "expenseTotal": "Expenses",
+    "category": "Category",
+    "noCategory": "No category"
   },
   "errors": {
     "invalid_amount": "Enter a valid amount.",
@@ -88,6 +90,39 @@
     "person_unknown": "Person not found.",
     "name_required": "Enter a name.",
     "account_name_taken": "An active account with this name already exists.",
-    "unknown": "Something went wrong. Try again."
+    "unknown": "Something went wrong. Try again.",
+    "category_not_allowed": "This category does not apply to this kind of transaction.",
+    "category_archived": "Archived category.",
+    "category_name_taken": "An active category with this name already exists.",
+    "category_used_by_income": "Income uses this category; it must keep accepting income.",
+    "category_not_found": "Category not found."
+  },
+  "budget": {
+    "total": "Budgeted",
+    "spent": "Spent",
+    "remaining": "Remaining",
+    "overBy": "Over by",
+    "used": "{{percent}}% used",
+    "noBudget": "No budget",
+    "setBudget": "Set budget",
+    "amount": "Monthly amount",
+    "amountHint": "Applies from this month on and does not change earlier months. Leave empty to remove.",
+    "uncategorized": "Uncategorized",
+    "committed": "Scheduled",
+    "empty": "No categories yet. Create the first one.",
+    "newCategory": "New category",
+    "categoryName": "Name",
+    "categoryKind": "Kind",
+    "archive": "Archive category",
+    "kinds": {
+      "expense": "Expenses only",
+      "both": "Expenses and income"
+    },
+    "status": {
+      "none": "No budget",
+      "ok": "Within budget",
+      "warning": "Close to the limit",
+      "over": "Over budget"
+    }
   }
 }

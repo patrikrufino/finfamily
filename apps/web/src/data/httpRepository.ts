@@ -1,6 +1,8 @@
 import {
   ApiError,
   type AccountDto,
+  type BudgetReportDto,
+  type CategoryDto,
   type FinanceRepository,
   type PersonDto,
   type TransactionDto,
@@ -28,13 +30,20 @@ export const httpRepository: FinanceRepository = {
   listAccounts: () => request<AccountDto[]>("/api/accounts"),
   createAccount: (input) => request<AccountDto>("/api/accounts", send("POST", input)),
   updateAccount: (id, patch) => request<AccountDto>(`/api/accounts/${id}`, send("PATCH", patch)),
-  listTransactions: ({ month, accountId, personId }) => {
+  listTransactions: ({ month, accountId, personId, categoryId }) => {
     const qs = new URLSearchParams({ month });
     if (accountId) qs.set("accountId", String(accountId));
     if (personId) qs.set("personId", String(personId));
+    if (categoryId) qs.set("categoryId", String(categoryId));
     return request<TransactionDto[]>(`/api/transactions?${qs}`);
   },
   createTransaction: (input) => request<TransactionDto>("/api/transactions", send("POST", input)),
   updateTransaction: (id, input) => request<TransactionDto>(`/api/transactions/${id}`, send("PUT", input)),
   deleteTransaction: (id) => request<void>(`/api/transactions/${id}`, send("DELETE")),
+  listCategories: () => request<CategoryDto[]>("/api/categories"),
+  createCategory: (input) => request<CategoryDto>("/api/categories", send("POST", input)),
+  updateCategory: (id, patch) => request<CategoryDto>(`/api/categories/${id}`, send("PATCH", patch)),
+  setBudget: (categoryId, month, amountCents) =>
+    request<void>(`/api/budgets/${categoryId}`, send("PUT", { month, amountCents })),
+  getBudget: (month) => request<BudgetReportDto>(`/api/budget?month=${month}`),
 };

@@ -1,4 +1,4 @@
-import type { AccountType, TransactionKind, TransactionStatus } from "@finfamily/domain";
+import type { AccountType, BudgetStatus, CategoryKind, TransactionKind, TransactionStatus } from "@finfamily/domain";
 
 export interface PersonDto {
   id: number;
@@ -22,10 +22,41 @@ export interface TransactionDto {
   date: string;
   accountId: number;
   toAccountId: number | null;
+  categoryId: number | null;
   description: string;
   status: TransactionStatus;
   personId: number;
 }
+
+export interface CategoryDto {
+  id: number;
+  name: string;
+  kind: CategoryKind;
+  archived: boolean;
+}
+
+export interface BudgetCategoryDto {
+  categoryId: number;
+  name: string;
+  kind: CategoryKind;
+  archived: boolean;
+  budgetCents: number;
+  spentCents: number;
+  committedCents: number;
+  remainingCents: number;
+  availableAfterCommittedCents: number;
+  ratio: number;
+  status: BudgetStatus;
+}
+
+export interface BudgetReportDto {
+  month: string;
+  categories: BudgetCategoryDto[];
+  uncategorized: { spentCents: number; committedCents: number };
+  totals: { budgetCents: number; spentCents: number; remainingCents: number };
+}
+
+export type NewCategory = Pick<CategoryDto, "name" | "kind">;
 
 export type NewTransaction = Omit<TransactionDto, "id">;
 export type NewAccount = Pick<AccountDto, "name" | "type" | "initialBalanceCents">;
@@ -34,6 +65,7 @@ export interface TransactionFilter {
   month: string;
   accountId?: number;
   personId?: number;
+  categoryId?: number;
 }
 
 export class ApiError extends Error {
@@ -55,4 +87,9 @@ export interface FinanceRepository {
   createTransaction(input: NewTransaction): Promise<TransactionDto>;
   updateTransaction(id: number, input: NewTransaction): Promise<TransactionDto>;
   deleteTransaction(id: number): Promise<void>;
+  listCategories(): Promise<CategoryDto[]>;
+  createCategory(input: NewCategory): Promise<CategoryDto>;
+  updateCategory(id: number, patch: Partial<Pick<CategoryDto, "name" | "kind" | "archived">>): Promise<CategoryDto>;
+  setBudget(categoryId: number, month: string, amountCents: number): Promise<void>;
+  getBudget(month: string): Promise<BudgetReportDto>;
 }

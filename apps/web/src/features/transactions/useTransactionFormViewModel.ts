@@ -1,5 +1,7 @@
 import {
+  categoryAllows,
   Money,
+  validateTransactionCategory,
   validateTransactionInput,
   type TransactionError,
   type TransactionKind,
@@ -17,6 +19,7 @@ export interface TransactionFormValues {
   date: string;
   accountId: number | null;
   toAccountId: number | null;
+  categoryId: number | null;
   description: string;
   settled: boolean;
 }
@@ -38,9 +41,11 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
   const { person } = usePersonViewModel();
 
   const accountsQuery = useQuery({ queryKey: ["accounts"], queryFn: () => repository.listAccounts() });
+  const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: () => repository.listCategories() });
   const peopleQuery = useQuery({ queryKey: ["people"], queryFn: () => repository.listPeople() });
   const accounts = accountsQuery.data ?? [];
   const people = peopleQuery.data ?? [];
+  const allCategories = categoriesQuery.data ?? [];
 
   const [edited, setEdited] = useState<Partial<TransactionFormValues>>({});
   const [errors, setErrors] = useState<FormError[]>([]);
@@ -55,6 +60,7 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
         date: transaction.date,
         accountId: transaction.accountId,
         toAccountId: transaction.toAccountId,
+        categoryId: transaction.categoryId,
         description: transaction.description,
         settled: transaction.status === "settled",
       }
@@ -64,10 +70,15 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
         date: today,
         accountId: accounts[0]?.id ?? null,
         toAccountId: null,
+        categoryId: null,
         description: "",
         settled: true,
       };
-  const values: TransactionFormValues = { ...base, ...edited };
+  const merged: TransactionFormValues = { ...base, ...edited };
+  const categories = allCategories.filter((c) => categoryAllows(c, merged.kind));
+  // A category that no longer fits the kind (or is not loaded yet) is treated as unset.
+  const categoryId = categories.some((c) => c.id === merged.categoryId) ? merged.categoryId : null;
+  const values: TransactionFormValues = { ...merged, categoryId };
 
   const save = useMutation({
     mutationFn: (input: Omit<TransactionDto, "id">) =>
@@ -75,6 +86,7 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["budget"] });
     },
   });
 
@@ -100,11 +112,13 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
         date: values.date,
         accountId: values.accountId,
         toAccountId: values.kind === "transfer" ? values.toAccountId : null,
+        categoryId: values.categoryId,
         description: values.description.trim(),
         status: values.settled ? ("settled" as const) : ("scheduled" as const),
         personId: transaction?.personId ?? personId,
       };
-      found.push(...validateTransactionInput({ ...input, amount }));
+      const category = allCategories.find((c) => c.id === input.categoryId) ?? null;
+      found.push(...validateTransactionInput({ ...input, amount }), ...validateTransactionCategory(input.kind, category));
       if (found.length === 0) {
         await save.mutateAsync(input);
         setErrors([]);
@@ -115,5 +129,5 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
     return false;
   }
 
-  return { values, setField, errors, submit, accounts, isSaving: save.isPending };
+  return { values, setField, errors, submit, accounts, categories, isSaving: save.isPending };
 }

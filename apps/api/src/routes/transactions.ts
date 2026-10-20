@@ -1,9 +1,15 @@
-import { Money, TRANSACTION_KINDS, TRANSACTION_STATUSES, validateTransactionInput } from "@finfamily/domain";
+import {
+  Money,
+  TRANSACTION_KINDS,
+  TRANSACTION_STATUSES,
+  validateTransactionCategory,
+  validateTransactionInput,
+} from "@finfamily/domain";
 import { and, desc, eq, like, or } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import type { AppDatabase } from "../db/client";
-import { accounts, people, transactions } from "../db/schema";
+import { accounts, categories, people, transactions } from "../db/schema";
 import { transactionDto } from "../mappers";
 
 const bodySchema = z.object({
@@ -12,6 +18,7 @@ const bodySchema = z.object({
   date: z.string(),
   accountId: z.number().int(),
   toAccountId: z.number().int().nullish().transform((v) => v ?? null),
+  categoryId: z.number().int().nullish().transform((v) => v ?? null),
   description: z.string().trim().max(200).default(""),
   status: z.enum(TRANSACTION_STATUSES).default("settled"),
   personId: z.number().int(),
@@ -26,7 +33,12 @@ export function transactionsRoutes(db: AppDatabase) {
     const parsed = bodySchema.safeParse(raw);
     if (!parsed.success) return { status: 422 as const, errors: ["invalid_transaction"] };
     const b = parsed.data;
-    const errors = validateTransactionInput({ ...b, amount: Money.fromCents(b.amountCents) });
+    const category = b.categoryId === null ? null : db.select().from(categories).where(eq(categories.id, b.categoryId)).get() ?? undefined;
+    if (category === undefined) return { status: 404 as const, errors: ["category_not_found"] };
+    const errors = [
+      ...validateTransactionInput({ ...b, amount: Money.fromCents(b.amountCents) }),
+      ...validateTransactionCategory(b.kind, category),
+    ];
     if (errors.length) return { status: 422 as const, errors };
     const accountExists = (id: number) => !!db.select().from(accounts).where(eq(accounts.id, id)).get();
     if (!accountExists(b.accountId) || (b.toAccountId !== null && !accountExists(b.toAccountId))) {
@@ -35,8 +47,8 @@ export function transactionsRoutes(db: AppDatabase) {
     if (!db.select().from(people).where(eq(people.id, b.personId)).get()) {
       return { status: 404 as const, errors: ["person_not_found"] };
     }
-    const { kind, amountCents, date, accountId, toAccountId, description, status, personId } = b;
-    return { values: { kind, amountCents, date, accountId, toAccountId, description, status, personId } };
+    const { kind, amountCents, date, accountId, toAccountId, categoryId, description, status, personId } = b;
+    return { values: { kind, amountCents, date, accountId, toAccountId, categoryId, description, status, personId } };
   };
 
   app.get("/", (c) => {
@@ -44,10 +56,12 @@ export function transactionsRoutes(db: AppDatabase) {
     if (month !== undefined && !monthSchema.safeParse(month).success) return c.json({ errors: ["invalid_month"] }, 422);
     const accountId = c.req.query("accountId") ? Number(c.req.query("accountId")) : undefined;
     const personId = c.req.query("personId") ? Number(c.req.query("personId")) : undefined;
+    const categoryId = c.req.query("categoryId") ? Number(c.req.query("categoryId")) : undefined;
     const filters = [
       month ? like(transactions.date, `${month}-%`) : undefined,
       accountId ? or(eq(transactions.accountId, accountId), eq(transactions.toAccountId, accountId)) : undefined,
       personId ? eq(transactions.personId, personId) : undefined,
+      categoryId ? eq(transactions.categoryId, categoryId) : undefined,
     ];
     const rows = db.select().from(transactions).where(and(...filters))
       .orderBy(desc(transactions.date), desc(transactions.id)).all();

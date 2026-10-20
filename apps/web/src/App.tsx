@@ -5,6 +5,7 @@ import { css } from "../styled-system/css";
 import { PersonPicker } from "./features/people/PersonPicker";
 import { ThemeToggle } from "./features/theme/ThemeToggle";
 import { TransactionDialog } from "./features/transactions/TransactionDialog";
+import { BudgetPage } from "./pages/BudgetPage";
 import { HomePage } from "./pages/HomePage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { TransactionsPage } from "./pages/TransactionsPage";
@@ -50,7 +51,8 @@ export function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/transactions" element={<TransactionsPage />} />
-          {NAV_ITEMS.filter(({ key }) => key !== "home" && key !== "transactions").map(({ path, key }) => (
+          <Route path="/budget" element={<BudgetPage />} />
+          {NAV_ITEMS.filter(({ key }) => key !== "home" && key !== "transactions" && key !== "budget").map(({ path, key }) => (
             <Route key={key} path={path} element={<PlaceholderPage titleKey={`pages.${key}`} />} />
           ))}
         </Routes>

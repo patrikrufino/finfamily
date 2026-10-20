@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Money } from "./money";
-import { validateTransactionInput, type TransactionInput } from "./transaction";
+import { validateTransactionCategory, validateTransactionInput, type TransactionInput } from "./transaction";
 
 const valid: TransactionInput = {
   kind: "expense",
@@ -8,6 +8,7 @@ const valid: TransactionInput = {
   date: "2026-10-20",
   accountId: 1,
   toAccountId: null,
+  categoryId: null,
   description: "Groceries",
   status: "settled",
   personId: 1,
@@ -36,5 +37,28 @@ describe("validateTransactionInput", () => {
 
   it("forbids a destination on income and expense", () => {
     expect(validateTransactionInput({ ...valid, toAccountId: 2 })).toContain("destination_only_for_transfer");
+  });
+});
+
+describe("validateTransactionCategory", () => {
+  const food = { id: 1, name: "Food", kind: "expense" as const, archived: false };
+  const salary = { id: 2, name: "Salary", kind: "both" as const, archived: false };
+
+  it("accepts no category for income and expenses", () => {
+    expect(validateTransactionCategory("expense", null)).toEqual([]);
+    expect(validateTransactionCategory("income", null)).toEqual([]);
+  });
+
+  it("rejects an expense-only category on income", () => {
+    expect(validateTransactionCategory("income", food)).toContain("category_not_allowed");
+    expect(validateTransactionCategory("income", salary)).toEqual([]);
+  });
+
+  it("rejects archived categories", () => {
+    expect(validateTransactionCategory("expense", { ...food, archived: true })).toContain("category_archived");
+  });
+
+  it("rejects any category on transfers", () => {
+    expect(validateTransactionCategory("transfer", salary)).toContain("category_not_allowed");
   });
 });

@@ -77,6 +77,15 @@ function TransactionForm({ transaction, onClose, onDelete }: Pick<Props, "transa
           </select>
         </div>
       )}
+      {vm.categories.length > 0 && (
+        <div>
+          <label htmlFor="tx-category" className={label}>{t("transactions.category")}</label>
+          <select id="tx-category" className={field} value={values.categoryId ?? ""} onChange={(e) => vm.setField("categoryId", e.target.value ? Number(e.target.value) : null)}>
+            <option value="">{t("transactions.noCategory")}</option>
+            {vm.categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </div>
+      )}
       <div>
         <label htmlFor="tx-description" className={label}>{t("transactions.description")}</label>
         <input id="tx-description" className={field} value={values.description} onChange={(e) => vm.setField("description", e.target.value)} />
