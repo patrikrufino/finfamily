@@ -41,4 +41,24 @@ describe("Money", () => {
     const text = Money.fromCents(-500).format("pt-BR").replace(/ /g, " ");
     expect(text).toBe("-R$ 5,00");
   });
+
+  describe("parse", () => {
+    it("parses pt-BR input", () => {
+      expect(Money.parse("1.234,56", "pt-BR")?.cents).toBe(123456);
+      expect(Money.parse("R$ 10,5", "pt-BR")?.cents).toBe(1050);
+      expect(Money.parse("7", "pt-BR")?.cents).toBe(700);
+      expect(Money.parse("-12,30", "pt-BR")?.cents).toBe(-1230);
+    });
+
+    it("parses en input", () => {
+      expect(Money.parse("1,234.56", "en")?.cents).toBe(123456);
+    });
+
+    it("returns null for invalid input", () => {
+      expect(Money.parse("", "pt-BR")).toBeNull();
+      expect(Money.parse("abc", "pt-BR")).toBeNull();
+      expect(Money.parse("1,2,3", "pt-BR")).toBeNull();
+      expect(Money.parse("1,234", "pt-BR")?.cents).toBeUndefined();
+    });
+  });
 });

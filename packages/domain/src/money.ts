@@ -15,6 +15,22 @@ export class Money {
     return new Money(Math.round(amount * 100));
   }
 
+  /**
+   * Parses user-typed text using the locale's separators. Returns null when invalid.
+   * Accepts at most 2 decimal digits and ignores currency symbols and spaces.
+   */
+  static parse(text: string, locale: string = DEFAULT_LOCALE): Money | null {
+    const parts = new Intl.NumberFormat(locale).formatToParts(1234567.8);
+    const group = parts.find((p) => p.type === "group")?.value ?? ",";
+    const decimal = parts.find((p) => p.type === "decimal")?.value ?? ".";
+    const cleaned = text.replace(/[^\d\-.,]/g, "").split(group).join("");
+    const match = /^(-?)(\d+)(?:[.,](\d{1,2}))?$/.exec(cleaned.split(decimal).join("."));
+    if (!match) return null;
+    const [, sign, whole, fraction = ""] = match;
+    const cents = Number(whole) * 100 + Number(fraction.padEnd(2, "0"));
+    return new Money(sign ? -cents : cents);
+  }
+
   static zero(): Money {
     return new Money(0);
   }
