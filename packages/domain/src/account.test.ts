@@ -14,6 +14,7 @@ const tx = (over: Partial<Transaction>): Transaction => ({
   date: "2026-10-01",
   accountId: 1,
   toAccountId: null,
+  categoryId: null,
   description: "",
   status: "settled",
   personId: 1,

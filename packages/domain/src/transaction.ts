@@ -1,3 +1,4 @@
+import { categoryAllows, type Category } from "./category";
 import type { Money } from "./money";
 
 export const TRANSACTION_KINDS = ["income", "expense", "transfer"] as const;
@@ -13,6 +14,7 @@ export interface TransactionInput {
   date: string;
   accountId: number;
   toAccountId: number | null;
+  categoryId: number | null;
   description: string;
   status: TransactionStatus;
   personId: number;
@@ -27,7 +29,9 @@ export type TransactionError =
   | "invalid_date"
   | "transfer_needs_destination"
   | "transfer_same_account"
-  | "destination_only_for_transfer";
+  | "destination_only_for_transfer"
+  | "category_not_allowed"
+  | "category_archived";
 
 export function isValidIsoDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -46,4 +50,11 @@ export function validateTransactionInput(input: TransactionInput): TransactionEr
     errors.push("destination_only_for_transfer");
   }
   return errors;
+}
+
+/** `category` is the resolved category the transaction points to, or null when it has none. */
+export function validateTransactionCategory(kind: TransactionKind, category: Category | null): TransactionError[] {
+  if (!category) return [];
+  if (!categoryAllows(category, kind)) return ["category_not_allowed"];
+  return category.archived ? ["category_archived"] : [];
 }
