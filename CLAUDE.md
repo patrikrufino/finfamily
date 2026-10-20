@@ -1,0 +1,33 @@
+# FinFamily
+
+Family finance PWA for two people (Patrik and Heloisa). Runs locally at home; no login.
+
+## Language rules (important)
+- **All code, identifiers, comments, tests, specs, docs and commit messages are in English.**
+- The product locale is **pt-BR**, but user-facing text never lives in components: it goes through i18n
+  (`apps/web/src/i18n/locales/*.json`, keys in English, values per locale). Always add keys to every locale file.
+- Dates, numbers and money are formatted with `Intl` using the active locale (`Money.format(locale)`).
+- Commit messages: English, imperative mood, Conventional Commits (`feat:`, `fix:`, `test:`, `chore:`, `docs:`).
+
+## Architecture
+- `packages/domain` – pure TypeScript business rules (no I/O, no React). Money is integer cents (`Money`).
+- `apps/api` – Hono + better-sqlite3 + Drizzle. Migrations in `apps/api/drizzle` (`pnpm --filter @finfamily/api db:generate`).
+- `apps/web` – React 19 + Vite + Panda CSS + Ark UI + PWA. Mobile first.
+- MVVM: **Model** = domain + repositories, **ViewModel** = `use<Feature>ViewModel` hooks (no JSX),
+  **View** = dumb components that only consume a ViewModel. Features live in `src/features/<feature>`.
+
+## Workflow
+- SDD: write/refresh the spec in `specs/` first (Given/When/Then acceptance criteria).
+- TDD: failing test -> minimal implementation -> refactor. Domain gets the most tests.
+- Before committing: `pnpm typecheck && pnpm test`. E2E: `pnpm --filter @finfamily/web test:e2e`
+  (set `CHROMIUM_PATH` if the Playwright browser is not installed).
+- Ark UI components: use the `ark-ui` MCP server (`.mcp.json`) for examples and styling guide.
+- Panda CSS v2: no shorthand props (`background`, `paddingInline`, ...). Run `panda codegen` after config changes.
+
+## Business rules decided
+- Credit card closing day has validity by date; changing it never alters past statements. A purchase on the closing day goes to the current statement.
+- Interest and fines are recorded at statement payment time as separate items.
+- Installments are equal by default (remainder cents on the last), individually editable, can be anticipated or fully settled; work on account or card.
+- Budget: fixed monthly amount per category, expenses only, resets every month (no rollover).
+- Debts: only debts the household owes; interest can be posted; payments (partial/total) create an expense.
+- Recurring transactions are included and feed the forecast. Every transaction records who made it.

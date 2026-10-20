@@ -1,0 +1,14 @@
+{
+  "name": "finfamily",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @finfamily/api --filter @finfamily/web dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "backup": "pnpm --filter @finfamily/api backup"
+  }
+}
