@@ -1,0 +1,22 @@
+{
+  "app": { "name": "FinFamily" },
+  "nav": {
+    "home": "Home",
+    "transactions": "Transactions",
+    "budget": "Budget",
+    "cards": "Cards",
+    "debts": "Debts",
+    "label": "Main navigation"
+  },
+  "pages": {
+    "home": "Overview",
+    "transactions": "Transactions",
+    "budget": "Budget",
+    "cards": "Cards",
+    "debts": "Debts",
+    "comingSoon": "Coming soon"
+  },
+  "theme": { "dark": "Dark theme" },
+  "people": { "label": "Who is using", "patrik": "Patrik", "heloisa": "Heloisa" },
+  "actions": { "newTransaction": "New transaction" }
+}

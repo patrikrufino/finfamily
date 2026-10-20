@@ -1,0 +1,22 @@
+{
+  "app": { "name": "FinFamily" },
+  "nav": {
+    "home": "Início",
+    "transactions": "Lançamentos",
+    "budget": "Orçamento",
+    "cards": "Cartões",
+    "debts": "Dívidas",
+    "label": "Navegação principal"
+  },
+  "pages": {
+    "home": "Visão geral",
+    "transactions": "Lançamentos",
+    "budget": "Orçamento",
+    "cards": "Cartões",
+    "debts": "Dívidas",
+    "comingSoon": "Em breve"
+  },
+  "theme": { "dark": "Tema escuro" },
+  "people": { "label": "Quem está usando", "patrik": "Patrik", "heloisa": "Heloisa" },
+  "actions": { "newTransaction": "Novo lançamento" }
+}
