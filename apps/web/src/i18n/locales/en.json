@@ -1,0 +1,93 @@
+{
+  "app": {
+    "name": "FinFamily"
+  },
+  "nav": {
+    "home": "Home",
+    "transactions": "Transactions",
+    "budget": "Budget",
+    "cards": "Cards",
+    "debts": "Debts",
+    "label": "Main navigation"
+  },
+  "pages": {
+    "home": "Overview",
+    "transactions": "Transactions",
+    "budget": "Budget",
+    "cards": "Cards",
+    "debts": "Debts",
+    "comingSoon": "Coming soon"
+  },
+  "theme": {
+    "dark": "Dark theme"
+  },
+  "people": {
+    "label": "Who is using",
+    "patrik": "Patrik",
+    "heloisa": "Heloisa"
+  },
+  "actions": {
+    "newTransaction": "New transaction"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "close": "Close",
+    "loading": "Loading…",
+    "all": "All",
+    "everyone": "Everyone"
+  },
+  "accounts": {
+    "title": "Accounts",
+    "total": "Total balance",
+    "projected": "Projected",
+    "new": "New account",
+    "name": "Name",
+    "type": "Type",
+    "initialBalance": "Initial balance",
+    "archive": "Archive",
+    "empty": "No accounts yet. Create the first one.",
+    "types": {
+      "checking": "Checking",
+      "savings": "Savings",
+      "wallet": "Wallet",
+      "investment": "Investment"
+    }
+  },
+  "transactions": {
+    "new": "New transaction",
+    "edit": "Edit transaction",
+    "kind": "Kind",
+    "amount": "Amount",
+    "date": "Date",
+    "account": "Account",
+    "toAccount": "Destination account",
+    "description": "Description",
+    "settled": "Already settled",
+    "scheduled": "Scheduled",
+    "income": "Income",
+    "expense": "Expense",
+    "transfer": "Transfer",
+    "empty": "No transactions this month.",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "filterAccount": "Filter by account",
+    "filterPerson": "Filter by person",
+    "incomeTotal": "Income",
+    "expenseTotal": "Expenses"
+  },
+  "errors": {
+    "invalid_amount": "Enter a valid amount.",
+    "amount_must_be_positive": "The amount must be greater than zero.",
+    "invalid_date": "Invalid date.",
+    "transfer_needs_destination": "Choose the destination account.",
+    "transfer_same_account": "Source and destination must differ.",
+    "destination_only_for_transfer": "Destination only applies to transfers.",
+    "account_required": "Choose an account.",
+    "person_unknown": "Person not found.",
+    "name_required": "Enter a name.",
+    "account_name_taken": "An active account with this name already exists.",
+    "unknown": "Something went wrong. Try again."
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "app": {
+    "name": "FinFamily"
+  },
+  "nav": {
+    "home": "Início",
+    "transactions": "Lançamentos",
+    "budget": "Orçamento",
+    "cards": "Cartões",
+    "debts": "Dívidas",
+    "label": "Navegação principal"
+  },
+  "pages": {
+    "home": "Visão geral",
+    "transactions": "Lançamentos",
+    "budget": "Orçamento",
+    "cards": "Cartões",
+    "debts": "Dívidas",
+    "comingSoon": "Em breve"
+  },
+  "theme": {
+    "dark": "Tema escuro"
+  },
+  "people": {
+    "label": "Quem está usando",
+    "patrik": "Patrik",
+    "heloisa": "Heloisa"
+  },
+  "actions": {
+    "newTransaction": "Novo lançamento"
+  },
+  "common": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "close": "Fechar",
+    "loading": "Carregando…",
+    "all": "Todas",
+    "everyone": "Todos"
+  },
+  "accounts": {
+    "title": "Contas",
+    "total": "Saldo total",
+    "projected": "Previsto",
+    "new": "Nova conta",
+    "name": "Nome",
+    "type": "Tipo",
+    "initialBalance": "Saldo inicial",
+    "archive": "Arquivar",
+    "empty": "Nenhuma conta ainda. Crie a primeira.",
+    "types": {
+      "checking": "Conta corrente",
+      "savings": "Poupança",
+      "wallet": "Carteira",
+      "investment": "Investimento"
+    }
+  },
+  "transactions": {
+    "new": "Novo lançamento",
+    "edit": "Editar lançamento",
+    "kind": "Tipo",
+    "amount": "Valor",
+    "date": "Data",
+    "account": "Conta",
+    "toAccount": "Conta de destino",
+    "description": "Descrição",
+    "settled": "Já efetivado",
+    "scheduled": "Previsto",
+    "income": "Receita",
+    "expense": "Despesa",
+    "transfer": "Transferência",
+    "empty": "Nenhum lançamento neste mês.",
+    "previousMonth": "Mês anterior",
+    "nextMonth": "Próximo mês",
+    "filterAccount": "Filtrar por conta",
+    "filterPerson": "Filtrar por pessoa",
+    "incomeTotal": "Receitas",
+    "expenseTotal": "Despesas"
+  },
+  "errors": {
+    "invalid_amount": "Informe um valor válido.",
+    "amount_must_be_positive": "O valor deve ser maior que zero.",
+    "invalid_date": "Data inválida.",
+    "transfer_needs_destination": "Escolha a conta de destino.",
+    "transfer_same_account": "Origem e destino devem ser diferentes.",
+    "destination_only_for_transfer": "Destino só vale para transferências.",
+    "account_required": "Escolha uma conta.",
+    "person_unknown": "Pessoa não encontrada.",
+    "name_required": "Informe um nome.",
+    "account_name_taken": "Já existe uma conta ativa com esse nome.",
+    "unknown": "Algo deu errado. Tente novamente."
+  }
+}
