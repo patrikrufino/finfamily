@@ -5,7 +5,7 @@ import { renderHookWithProviders } from "../../test/render";
 import { useTransactionsViewModel } from "./useTransactionsViewModel";
 
 const tx = (over: Record<string, unknown>) => ({
-  kind: "expense" as const, amountCents: 1000, date: "2026-10-05", accountId: 1, toAccountId: null,
+  kind: "expense" as const, amountCents: 1000, date: "2026-10-05", accountId: 1, toAccountId: null, categoryId: null,
   description: "", status: "settled" as const, personId: 1, ...over,
 });
 

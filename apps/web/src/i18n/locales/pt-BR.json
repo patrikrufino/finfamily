@@ -75,7 +75,9 @@
     "filterAccount": "Filtrar por conta",
     "filterPerson": "Filtrar por pessoa",
     "incomeTotal": "Receitas",
-    "expenseTotal": "Despesas"
+    "expenseTotal": "Despesas",
+    "category": "Categoria",
+    "noCategory": "Sem categoria"
   },
   "errors": {
     "invalid_amount": "Informe um valor válido.",
@@ -88,6 +90,39 @@
     "person_unknown": "Pessoa não encontrada.",
     "name_required": "Informe um nome.",
     "account_name_taken": "Já existe uma conta ativa com esse nome.",
-    "unknown": "Algo deu errado. Tente novamente."
+    "unknown": "Algo deu errado. Tente novamente.",
+    "category_not_allowed": "Essa categoria não vale para este tipo de lançamento.",
+    "category_archived": "Categoria arquivada.",
+    "category_name_taken": "Já existe uma categoria ativa com esse nome.",
+    "category_used_by_income": "Há receitas nessa categoria; ela precisa continuar aceitando receitas.",
+    "category_not_found": "Categoria não encontrada."
+  },
+  "budget": {
+    "total": "Orçado",
+    "spent": "Gasto",
+    "remaining": "Restante",
+    "overBy": "Estourou em",
+    "used": "{{percent}}% usado",
+    "noBudget": "Sem orçamento",
+    "setBudget": "Definir orçamento",
+    "amount": "Valor mensal",
+    "amountHint": "Vale a partir deste mês e não altera meses anteriores. Deixe vazio para remover.",
+    "uncategorized": "Sem categoria",
+    "committed": "Previsto",
+    "empty": "Nenhuma categoria ainda. Crie a primeira.",
+    "newCategory": "Nova categoria",
+    "categoryName": "Nome",
+    "categoryKind": "Tipo",
+    "archive": "Arquivar categoria",
+    "kinds": {
+      "expense": "Só despesas",
+      "both": "Despesas e receitas"
+    },
+    "status": {
+      "none": "Sem orçamento",
+      "ok": "Dentro do orçamento",
+      "warning": "Quase no limite",
+      "over": "Estourado"
+    }
   }
 }
