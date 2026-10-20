@@ -1,16 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import { App } from "./App";
+import { renderWithProviders } from "./test/render";
 import { i18n } from "./i18n";
 
-const renderApp = (path = "/") =>
-  render(
-    <MemoryRouter initialEntries={[path]}>
-      <App />
-    </MemoryRouter>,
-  );
+const renderApp = (path = "/") => renderWithProviders(<App />, undefined, path);
 
 describe("App shell", () => {
   it("renders the pt-BR navigation by default", () => {
@@ -29,7 +24,7 @@ describe("App shell", () => {
 
   it("offers the quick new-transaction action", () => {
     renderApp();
-    expect(screen.getByRole("link", { name: "Novo lançamento" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Novo lançamento" })).toBeInTheDocument();
   });
 
   it("switches language through locales", async () => {

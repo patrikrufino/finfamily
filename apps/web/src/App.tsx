@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { NavLink, Route, Routes } from "react-router";
 import { useTranslation } from "react-i18next";
 import { css } from "../styled-system/css";
 import { PersonPicker } from "./features/people/PersonPicker";
 import { ThemeToggle } from "./features/theme/ThemeToggle";
+import { TransactionDialog } from "./features/transactions/TransactionDialog";
+import { HomePage } from "./pages/HomePage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
+import { TransactionsPage } from "./pages/TransactionsPage";
 
 const NAV_ITEMS = [
   { path: "/", key: "home" },
@@ -24,6 +28,7 @@ const navLink = css({
 
 export function App() {
   const { t } = useTranslation();
+  const [creating, setCreating] = useState(false);
 
   return (
     <div className={css({ minHeight: "100dvh", background: "bg", color: "text", paddingBottom: "20" })}>
@@ -43,14 +48,17 @@ export function App() {
 
       <main className={css({ padding: "4" })}>
         <Routes>
-          {NAV_ITEMS.map(({ path, key }) => (
+          <Route path="/" element={<HomePage />} />
+          <Route path="/transactions" element={<TransactionsPage />} />
+          {NAV_ITEMS.filter(({ key }) => key !== "home" && key !== "transactions").map(({ path, key }) => (
             <Route key={key} path={path} element={<PlaceholderPage titleKey={`pages.${key}`} />} />
           ))}
         </Routes>
       </main>
 
-      <NavLink
-        to="/transactions"
+      <button
+        type="button"
+        onClick={() => setCreating(true)}
         aria-label={t("actions.newTransaction")}
         className={css({
           position: "fixed",
@@ -69,7 +77,9 @@ export function App() {
         })}
       >
         +
-      </NavLink>
+      </button>
+
+      <TransactionDialog open={creating} onClose={() => setCreating(false)} />
 
       <nav
         aria-label={t("nav.label")}
