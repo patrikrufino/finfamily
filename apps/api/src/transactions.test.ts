@@ -92,4 +92,33 @@ describe("transactions API", () => {
   it("rejects a malformed month filter", async () => {
     expect((await app.request("/api/transactions?month=2026-13")).status).toBe(422);
   });
+
+  describe("categories", () => {
+    const category = async (kind: string) =>
+      ((await (await app.request("/api/categories", json("POST", { name: `c-${kind}`, kind }))).json()) as any).id as number;
+
+    it("stores the category and filters by it", async () => {
+      const id = await category("expense");
+      await post({ categoryId: id, description: "with" });
+      await post({ description: "without" });
+      const list = ((await (await app.request(`/api/transactions?month=2026-10&categoryId=${id}`)).json()) as any[]);
+      expect(list.map((t) => t.description)).toEqual(["with"]);
+      expect(list[0].categoryId).toBe(id);
+    });
+
+    it("rejects expense-only categories on income and any category on transfers", async () => {
+      const food = await category("expense");
+      const res = await post({ kind: "income", categoryId: food });
+      expect(((await res.json()) as any).errors).toContain("category_not_allowed");
+      const tr = await post({ kind: "transfer", toAccountId: savingsId, categoryId: food });
+      expect(((await tr.json()) as any).errors).toContain("category_not_allowed");
+    });
+
+    it("rejects unknown and archived categories", async () => {
+      expect((await post({ categoryId: 999 })).status).toBe(404);
+      const id = await category("expense");
+      await app.request(`/api/categories/${id}`, json("PATCH", { archived: true }));
+      expect(((await (await post({ categoryId: id })).json()) as any).errors).toContain("category_archived");
+    });
+  });
 });
