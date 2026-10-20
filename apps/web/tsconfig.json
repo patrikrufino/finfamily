@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["vite/client", "vite-plugin-pwa/client", "@testing-library/jest-dom/vitest"],
+    "paths": { "styled-system/*": ["./styled-system/*"] }
+  },
+  "include": ["src", "e2e", "styled-system", "vite.config.ts", "panda.config.ts"]
+}
