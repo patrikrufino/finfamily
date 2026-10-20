@@ -1,0 +1,12 @@
+node_modules
+dist
+coverage
+*.db
+*.db-shm
+*.db-wal
+backups/
+.env
+playwright-report
+test-results
+apps/web/styled-system
+.DS_Store
