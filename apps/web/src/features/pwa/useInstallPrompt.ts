@@ -9,13 +9,16 @@ interface BeforeInstallPromptEvent extends Event {
  * - `installed`: already running as an installed app (or just installed)
  * - `available`: the browser can show its install prompt (Chrome/Android/desktop)
  * - `ios`: Safari on iPhone/iPad has no prompt; the user adds it from the Share menu
- * - `unavailable`: nothing to offer (unsupported browser, not a secure context, or already dismissed)
+ * - `insecure`: the page was opened over plain HTTP; browsers only allow installing from HTTPS or localhost
+ * - `unavailable`: nothing to offer (unsupported browser, or the install prompt was already used)
  */
-export type InstallState = "installed" | "available" | "ios" | "unavailable";
+export type InstallState = "installed" | "available" | "ios" | "insecure" | "unavailable";
 
 const isStandalone = () =>
   (typeof matchMedia === "function" && matchMedia("(display-mode: standalone)").matches) ||
   (navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+const isSecure = () => typeof window === "undefined" || window.isSecureContext !== false;
 
 const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
 
@@ -48,6 +51,15 @@ export function useInstallPrompt() {
     return outcome;
   }, [deferred]);
 
-  const state: InstallState = installed ? "installed" : deferred ? "available" : isIos() ? "ios" : "unavailable";
+  // iOS can add a web clip even over HTTP, so its manual steps come first; elsewhere HTTP is the reason nothing can be offered.
+  const state: InstallState = installed
+    ? "installed"
+    : deferred
+      ? "available"
+      : isIos()
+        ? "ios"
+        : !isSecure()
+          ? "insecure"
+          : "unavailable";
   return { state, install };
 }

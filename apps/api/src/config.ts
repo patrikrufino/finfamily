@@ -3,7 +3,10 @@ import { dirname, join } from "node:path";
 import type { BackupConfig } from "./backup/backup";
 
 export interface AppConfig {
-  port: number;
+  /** Port of the API alone (`/api/*`). */
+  apiPort: number;
+  /** Port of the web app, which also answers `/api/*` so the browser stays on a single origin. */
+  webPort: number;
   databasePath: string;
   /** Folder with the built web app, or null when the API runs alone (development). */
   webDist: string | null;
@@ -24,10 +27,15 @@ function number(env: Env, name: string, fallback: number, min: number): number {
 export function loadConfig(env: Env, baseDir: string): AppConfig {
   const databasePath = env.DATABASE_PATH || "finfamily.db";
   const defaultDist = join(baseDir, "..", "web", "dist");
+  const apiPort = number(env, "API_PORT", 3132, 1);
+  const webPort = number(env, "WEB_PORT", 3152, 1);
+  if (apiPort === webPort) throw new Error(`API_PORT and WEB_PORT must be different, both are ${apiPort}`);
   return {
-    port: number(env, "PORT", 3333, 1),
+    apiPort,
+    webPort,
     databasePath,
-    webDist: env.WEB_DIST || (existsSync(defaultDist) ? defaultDist : null),
+    // WEB_DIST=off keeps the web port free for a dev server.
+    webDist: env.WEB_DIST === "off" ? null : env.WEB_DIST || (existsSync(defaultDist) ? defaultDist : null),
     backup: {
       dir: env.BACKUP_DIR || join(dirname(databasePath), "backups"),
       keep: number(env, "BACKUP_KEEP", 14, 1),

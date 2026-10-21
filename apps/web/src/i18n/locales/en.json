@@ -390,7 +390,7 @@
     "installAvailable": "Install FinFamily on your home screen to open it like an app.",
     "installButton": "Install",
     "installed": "The app is already installed on this device.",
-    "installIos": "On iPhone or iPad: tap Share, then “Add to Home Screen”.",
+    "installIos": "On iPhone or iPad: tap Share, then “Add to Home Screen”. For full offline support, open the app over HTTPS.",
     "installUnavailable": "Installation is not available right now. It requires opening the app over HTTPS (or localhost) in a supported browser.",
     "backups": "Backups",
     "backupsHint": "Copies of the database made on the computer where the app runs.",
@@ -407,7 +407,22 @@
     "languages": {
       "pt-BR": "Português (Brasil)",
       "en": "English"
-    }
+    },
+    "installInsecure": "You opened the app over HTTP ({{origin}}). Browsers only allow installing the app and working offline over HTTPS (or on localhost). Open the app's HTTPS address — see the README (Tailscale or mkcert). To test only at home in Chrome for Android, you can allow this address in chrome://flags/#unsafely-treat-insecure-origin-as-secure.",
+    "diagnostics": "Diagnostics",
+    "secureLabel": "Secure connection (HTTPS)",
+    "yes": "Yes",
+    "no": "No",
+    "swLabel": "Service worker (offline mode)",
+    "swState": {
+      "active": "Active",
+      "inactive": "Not registered yet (reload the page)",
+      "unsupported": "Not available at this address"
+    },
+    "displayLabel": "Opened as",
+    "displayStandalone": "Installed app",
+    "displayBrowser": "Browser",
+    "addressLabel": "Address"
   },
   "offline": {
     "banner": "Cannot reach the server. Check that the computer at home is on and that you are on the same network.",

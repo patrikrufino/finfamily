@@ -1,0 +1,17 @@
+**/node_modules
+**/dist
+**/coverage
+**/test-results
+**/playwright-report
+apps/web/styled-system
+.git
+.github
+data
+backups
+*.db
+*.db-shm
+*.db-wal
+.env
+docs
+specs
+README.md

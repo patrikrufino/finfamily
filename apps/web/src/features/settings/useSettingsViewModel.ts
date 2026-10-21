@@ -4,12 +4,14 @@ import { useRepository } from "../../data/RepositoryContext";
 import { SUPPORTED_LOCALES, setLocale, type Locale } from "../../i18n";
 import type { CommandResult } from "../accounts/useAccountsViewModel";
 import { useInstallPrompt } from "../pwa/useInstallPrompt";
+import { usePwaStatus } from "../pwa/usePwaStatus";
 
 export function useSettingsViewModel() {
   const repository = useRepository();
   const queryClient = useQueryClient();
   const { i18n } = useTranslation();
   const install = useInstallPrompt();
+  const pwa = usePwaStatus();
 
   const status = useQuery({ queryKey: ["backups"], queryFn: () => repository.getBackupStatus() });
   const create = useMutation({
@@ -37,6 +39,7 @@ export function useSettingsViewModel() {
     isBackingUp: create.isPending,
 
     installState: install.state,
+    pwa,
     install: install.install,
     version: __APP_VERSION__,
   };

@@ -71,3 +71,31 @@ test("lists the automatic backup and makes another on demand", async ({ page }) 
   await expect(page.getByText("Backup criado.")).toBeVisible();
   await expect(list.getByRole("listitem")).toHaveCount(before + 1);
 });
+
+test("Settings shows the PWA diagnostics: secure context and an active service worker on localhost", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.goto("/settings");
+  await expect(page.getByTestId("diag-secure")).toHaveText("Sim");
+  await expect(page.getByTestId("diag-sw")).toHaveText("Ativo");
+  await expect(page.getByText(/Você abriu o app por HTTP/)).toHaveCount(0);
+});
+
+test("opening the app by its network address over plain HTTP explains why it cannot be installed", async ({ browser }) => {
+  const { networkInterfaces } = await import("node:os");
+  const ip = Object.values(networkInterfaces()).flat().find((a) => a?.family === "IPv4" && !a.internal)?.address;
+  test.skip(!ip, "this machine has no network address");
+
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  await page.goto(`http://${ip}:3152/settings`);
+  await expect(page.getByTestId("diag-secure")).toHaveText("Não");
+  await expect(page.getByTestId("diag-sw")).toHaveText("Indisponível neste endereço");
+  await expect(page.getByRole("alert").filter({ hasText: "Você abriu o app por HTTP" })).toContainText(`http://${ip}:3152`);
+
+  // This is what the browser itself reports for the same page.
+  const cdp = await context.newCDPSession(page);
+  const { installabilityErrors } = await cdp.send("Page.getInstallabilityErrors");
+  expect(installabilityErrors.map((e) => e.errorId)).toContain("not-from-secure-origin");
+  await context.close();
+});

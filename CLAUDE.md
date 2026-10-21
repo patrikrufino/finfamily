@@ -30,6 +30,10 @@ Family finance PWA for two people (Patrik and Heloisa). Runs locally at home; no
 - Ark UI components: use the `ark-ui` MCP server (`.mcp.json`) for examples and styling guide.
 - Panda CSS v2: no shorthand props (`background`, `paddingInline`, ...). Run `panda codegen` after config changes.
 
+## Ports and deploy
+- API on **3132**, app (built web + `/api`) on **3152** (`API_PORT`/`WEB_PORT`; `pnpm dev` runs Vite on 3152 proxying to the API on 3132).
+- Docker + Tailscale: `docker-compose.yml`, `.env.example`; Tailscale provides the HTTPS the PWA needs.
+
 ## Business rules decided
 - Credit card closing day has validity by date; changing it never alters past statements. A purchase on the closing day goes to the current statement.
 - Interest and fines are recorded at statement payment time as separate items.

@@ -1,0 +1,47 @@
+# FinFamily at home.
+#   cp .env.example .env     # set TS_AUTHKEY (and LAN_BIND to the computer's fixed IP, if you want)
+#   mkdir -p data            # database and backups live here
+#   docker compose up -d --build
+#
+# App (plain HTTP, on your LAN):   http://<fixed-ip>:3152
+# App (HTTPS, installable PWA):    https://finfamily.<your-tailnet>.ts.net   (through the tailscale service)
+# API alone:                       http://<fixed-ip>:3132/api/health
+services:
+  app:
+    build: .
+    image: finfamily:latest
+    restart: unless-stopped
+    # Run as your own user so ./data stays writable from the host (see PUID/PGID in .env.example).
+    user: "${PUID:-1000}:${PGID:-1000}"
+    environment:
+      TZ: ${TZ:-America/Sao_Paulo}
+      BACKUP_INTERVAL_HOURS: ${BACKUP_INTERVAL_HOURS:-24}
+      BACKUP_KEEP: ${BACKUP_KEEP:-14}
+    volumes:
+      - ./data:/data
+    ports:
+      # Bound to the fixed LAN address when LAN_BIND is set, otherwise to every interface.
+      - "${LAN_BIND:-0.0.0.0}:3152:3152"
+      - "${LAN_BIND:-0.0.0.0}:3132:3132"
+
+  # Tailscale gives the app a real HTTPS address (needed to install the PWA and use offline mode on a phone).
+  # Enabled with COMPOSE_PROFILES=tailscale (see .env.example) or `docker compose --profile tailscale up -d`.
+  tailscale:
+    profiles: ["tailscale"]
+    image: tailscale/tailscale:stable
+    hostname: ${TS_HOSTNAME:-finfamily}
+    restart: unless-stopped
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY:?Set TS_AUTHKEY in .env (Tailscale admin console > Settings > Keys)}
+      TS_HOSTNAME: ${TS_HOSTNAME:-finfamily}
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_USERSPACE: "true" # no /dev/net/tun or extra privileges needed
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      - tailscale-state:/var/lib/tailscale
+      - ./docker/tailscale-serve.json:/config/serve.json:ro
+    depends_on:
+      - app
+
+volumes:
+  tailscale-state:
