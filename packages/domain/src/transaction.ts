@@ -26,6 +26,8 @@ export interface TransactionInput {
   /** Installment plan this transaction belongs to; `installmentNumber` is null for an anticipation item. */
   planId?: number | null;
   installmentNumber?: number | null;
+  /** Debt this expense pays off (a payment/baixa). */
+  debtId?: number | null;
   description: string;
   status: TransactionStatus;
   personId: number;
