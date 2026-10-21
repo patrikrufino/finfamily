@@ -23,6 +23,9 @@ export interface TransactionInput {
   feeKind?: "interest" | "fine" | null;
   /** Balance adjustment: keeps the account balance right but is not spending or earning. */
   adjustment?: boolean;
+  /** Installment plan this transaction belongs to; `installmentNumber` is null for an anticipation item. */
+  planId?: number | null;
+  installmentNumber?: number | null;
   description: string;
   status: TransactionStatus;
   personId: number;
