@@ -6,8 +6,10 @@ import { budgetRoutes } from "./routes/budget";
 import { cardsRoutes } from "./routes/cards";
 import { categoriesRoutes } from "./routes/categories";
 import { accountsRoutes } from "./routes/accounts";
+import { dashboardRoutes } from "./routes/dashboard";
 import { debtsRoutes } from "./routes/debts";
 import { installmentsRoutes } from "./routes/installments";
+import { postDueRecurring, recurringRoutes } from "./routes/recurring";
 import { transactionsRoutes } from "./routes/transactions";
 
 export interface AppOptions {
@@ -20,8 +22,9 @@ const localToday = () => new Date().toLocaleDateString("sv-SE");
 export function createApp(db: AppDatabase, { today = localToday }: AppOptions = {}) {
   const app = new Hono();
 
-  // Installments are settled automatically once their date arrives (idempotent and cheap, so done per request).
+  // Installments are settled and recurring occurrences are posted once their date arrives (idempotent and cheap, so done per request).
   app.use("/api/*", async (_c, next) => {
+    postDueRecurring(db, today());
     db.update(transactions).set({ status: "settled" })
       .where(and(eq(transactions.status, "scheduled"), isNotNull(transactions.planId), lte(transactions.date, today())))
       .run();
@@ -34,6 +37,8 @@ export function createApp(db: AppDatabase, { today = localToday }: AppOptions = 
   app.route("/api/categories", categoriesRoutes(db));
   app.route("/api/cards", cardsRoutes(db, today));
   app.route("/", budgetRoutes(db));
+  app.route("/api/dashboard", dashboardRoutes(db, today));
+  app.route("/api/recurring", recurringRoutes(db, today));
   app.route("/api/debts", debtsRoutes(db, today));
   app.route("/api/installment-plans", installmentsRoutes(db, today));
   app.route("/api/transactions", transactionsRoutes(db));

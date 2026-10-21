@@ -207,4 +207,70 @@ describe("useTransactionFormViewModel", () => {
       expect(result.current.canSplitInInstallments).toBe(false);
     });
   });
+
+  describe("recurring", () => {
+    it("offers repetition for new income and expenses only", async () => {
+      const { result } = await setup();
+      expect(result.current.canRepeat).toBe(true);
+      act(() => result.current.setField("kind", "transfer"));
+      expect(result.current.canRepeat).toBe(false);
+    });
+
+    it("does not offer repetition when editing", async () => {
+      const repo = seeded();
+      const existing = await repo.createTransaction({
+        kind: "expense", amountCents: 5000, date: "2026-10-02", accountId: 1, toAccountId: null,
+        categoryId: null, description: "Shoes", status: "settled", personId: 1,
+      });
+      const { result } = await setup(repo, { transaction: existing });
+      expect(result.current.canRepeat).toBe(false);
+    });
+
+    it("creates a recurring rule instead of one transaction", async () => {
+      const { result, repo } = await setup();
+      act(() => {
+        result.current.setField("amountText", "1.200,00");
+        result.current.setField("description", "Rent");
+        result.current.setField("repeat", "monthly");
+      });
+      let ok = false;
+      await act(async () => { ok = await result.current.submit(); });
+      expect(ok).toBe(true);
+      expect(repo.calls).toContain("createRecurring");
+      expect(repo.calls).not.toContain("createTransaction");
+      expect((await repo.listRecurring())[0]).toMatchObject({ description: "Rent", amountCents: 120000, frequency: "monthly", startDate: "2026-10-20", accountId: 1, cardId: null });
+    });
+
+    it("charges a repeating expense to a card", async () => {
+      const { result, repo } = await setup();
+      await waitFor(() => expect(result.current.cards).toHaveLength(1));
+      act(() => {
+        result.current.setField("amountText", "39,90");
+        result.current.setField("description", "Streaming");
+        result.current.setField("repeat", "monthly");
+        result.current.setSource({ type: "card", id: 1 });
+      });
+      await act(async () => { await result.current.submit(); });
+      expect((await repo.listRecurring())[0]).toMatchObject({ cardId: 1, accountId: null });
+    });
+
+    it("is cleared when the kind stops allowing it", async () => {
+      const { result } = await setup();
+      act(() => result.current.setField("repeat", "monthly"));
+      act(() => result.current.setField("kind", "transfer"));
+      expect(result.current.values.repeat).toBe("none");
+    });
+
+    it("cannot be combined with installments", async () => {
+      const { result } = await setup();
+      act(() => {
+        result.current.setField("amountText", "300,00");
+        result.current.setField("description", "Sofa");
+        result.current.setField("installmentsText", "3");
+        result.current.setField("repeat", "monthly");
+      });
+      await act(async () => { await result.current.submit(); });
+      expect(result.current.errors).toContain("recurring_and_installments");
+    });
+  });
 });

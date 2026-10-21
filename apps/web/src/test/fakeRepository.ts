@@ -4,13 +4,18 @@ import {
   balanceAdjustment,
   budgetForMonth,
   budgetProgress,
+  buildForecast,
   buildInstallmentSchedule,
   buildStatement,
   canRemoveEntry,
   cardUsage,
   debtLedger,
+  dueOccurrences,
+  firstIndexOnOrAfter,
   installmentStatusFor,
   isAnticipable,
+  monthSummary,
+  occurrenceDate,
   Money,
   planProgress,
   ruleForMonth,
@@ -20,10 +25,12 @@ import {
   validateDebtDiscount,
   validateDebtInterest,
   validateDebtPayment,
+  validateRecurring,
   validateInstallmentPlan,
   type Account,
   type BudgetEntry,
   type CycleRule,
+  type RecurringRule,
   type Debt,
   type DebtEntry,
   type Transaction,
@@ -33,13 +40,16 @@ import {
   type AccountDto,
   type CardDto,
   type CategoryDto,
+  type DashboardDto,
   type DebtDetailDto,
   type DebtDto,
   type NewCard,
   type NewCategory,
   type NewPlan,
   type PlanDetailDto,
+  type NewRecurring,
   type PlanDto,
+  type RecurringDto,
   type StatementDto,
   type FinanceRepository,
   type NewAccount,
@@ -54,6 +64,9 @@ export function createFakeRepository(
     transactions?: NewTransaction[];
     categories?: NewCategory[];
     cards?: NewCard[];
+    recurring?: NewRecurring[];
+    /** Overrides parts of the computed dashboard (for scenarios the fake does not model, like card statements due). */
+    dashboard?: Partial<DashboardDto>;
     /** Fixed current date (`YYYY-MM-DD`) for statement logic. */
     today?: string;
   } = {},
@@ -73,6 +86,8 @@ export function createFakeRepository(
   let nextCardId = 1;
   let debtRows: { id: number; creditor: string; originalCents: number; openedOn: string; categoryId: number | null; personId: number }[] = [];
   let debtEntryRows: { id: number; debtId: number; kind: "interest" | "discount"; amountCents: number; date: string; note: string }[] = [];
+  let recurringRules: RecurringRule[] = [];
+  let nextRecurringId = 1;
   let nextDebtId = 1;
   let nextEntryId = 1;
   let plans: (NewPlan & { id: number })[] = [];
@@ -91,7 +106,7 @@ export function createFakeRepository(
   };
 
   const withDefaults = (input: NewTransaction, id: number): TransactionDto => ({
-    cardId: null, statementMonth: null, feeKind: null, adjustment: false, planId: null, installmentNumber: null, debtId: null, ...input, id,
+    cardId: null, statementMonth: null, feeKind: null, adjustment: false, planId: null, installmentNumber: null, debtId: null, recurringId: null, ...input, id,
   });
   const toDomainTx = (t: TransactionDto): Transaction => ({ ...t, amount: Money.fromCents(t.amountCents) });
   const domainCard = (c: (typeof cardRows)[number]) => ({ id: c.id, name: c.name, limit: Money.fromCents(c.limitCents), archived: c.archived });
@@ -131,6 +146,31 @@ export function createFakeRepository(
     ...debtSummary(d), ledger: debtLedger(toDebt(d), entriesOfDebt(d.id), transactions.map(toDomainTx)),
   });
   const debtBalance = (d: (typeof debtRows)[number]) => Money.fromCents(debtSummary(d).balanceCents);
+
+  const recurringDto = (r: RecurringRule): RecurringDto => {
+    const nextDate = occurrenceDate(r.startDate, r.frequency, r.nextIndex);
+    const ended = r.endDate !== null && nextDate > r.endDate;
+    return {
+      id: r.id, kind: r.kind, amountCents: r.amount.cents, description: r.description, accountId: r.accountId, cardId: r.cardId,
+      categoryId: r.categoryId, personId: r.personId, frequency: r.frequency, startDate: r.startDate, endDate: r.endDate,
+      active: r.active, nextDate, postedCount: transactions.filter((t) => t.recurringId === r.id).length,
+      status: ended ? "ended" : r.active ? "active" : "paused",
+    };
+  };
+  const postDueRecurring = () => {
+    for (const rule of recurringRules) {
+      const due = dueOccurrences(rule, today());
+      for (const o of due) {
+        transactions.push(withDefaults({
+          kind: rule.kind, amountCents: rule.amount.cents, date: o.date, accountId: rule.accountId, cardId: rule.cardId,
+          toAccountId: null, categoryId: rule.categoryId, description: rule.description, status: "settled",
+          personId: rule.personId, recurringId: rule.id,
+        }, nextTransactionId++));
+      }
+      const last = due[due.length - 1];
+      if (last) rule.nextIndex = last.index + 1;
+    }
+  };
 
   const planSummary = (p: (typeof plans)[number]): PlanDto => {
     const progress = planProgress(transactions.filter((t) => t.planId === p.id).map(toDomainTx));
@@ -191,7 +231,7 @@ export function createFakeRepository(
       repo.calls.push("updateTransaction");
       // Like the API, an update never changes the plan link or the adjustment flag.
       transactions = transactions.map((t) =>
-        t.id === id ? withDefaults({ ...input, planId: t.planId, installmentNumber: t.installmentNumber, adjustment: t.adjustment, debtId: t.debtId }, id) : t,
+        t.id === id ? withDefaults({ ...input, planId: t.planId, installmentNumber: t.installmentNumber, adjustment: t.adjustment, debtId: t.debtId, recurringId: t.recurringId }, id) : t,
       );
       return transactions.find((t) => t.id === id)!;
     },
@@ -228,12 +268,72 @@ export function createFakeRepository(
       if (statementFor(cardId, month).totalCents <= 0) throw new ApiError(422, ["statement_empty"]);
       const base = {
         date: input.date, accountId: input.accountId, toAccountId: null, categoryId: null, cardId, statementMonth: month,
-        status: "settled" as const, personId: input.personId, adjustment: false, planId: null, installmentNumber: null, debtId: null,
+        status: "settled" as const, personId: input.personId, adjustment: false, planId: null, installmentNumber: null, debtId: null, recurringId: null,
       };
       transactions.push({ ...base, id: nextTransactionId++, kind: "transfer", amountCents: input.amountCents, feeKind: null, description: `${card.name} ${month}` });
       if (input.interestCents > 0) transactions.push({ ...base, id: nextTransactionId++, kind: "expense", amountCents: input.interestCents, feeKind: "interest", description: "interest" });
       if (input.fineCents > 0) transactions.push({ ...base, id: nextTransactionId++, kind: "expense", amountCents: input.fineCents, feeKind: "fine", description: "fine" });
       return statementFor(cardId, month);
+    },
+    getDashboard: async () => {
+      const txs = transactions.map(toDomainTx);
+      const accountDtos = accounts.filter((a) => !a.archived).map(toAccountDto);
+      const balanceCents = accountDtos.reduce((sum, a) => sum + a.balanceCents, 0);
+      const month = today().slice(0, 7);
+      const budget = await repo.getBudget(month);
+      const forecast = buildForecast({
+        today: today(), months: 6, startingBalanceCents: balanceCents, transactions: txs,
+        cards: cardRows.map(domainCard), cycleRules, recurring: recurringRules,
+      });
+      const open = debtRows.map(debtSummary).filter((d) => d.status === "open");
+      const dashboard: DashboardDto = {
+        today: today(), month, balanceCents, projectedEndOfMonthCents: forecast[0]?.endBalanceCents ?? balanceCents,
+        monthSummary: monthSummary(txs, month),
+        budget: {
+          totals: budget.totals,
+          highlights: budget.categories.filter((c) => c.status === "warning" || c.status === "over")
+            .map(({ categoryId, name, status, ratio, budgetCents, spentCents, remainingCents }) => ({ categoryId, name, status, ratio, budgetCents, spentCents, remainingCents })),
+        },
+        cardsDue: [], debts: { totalOwedCents: open.reduce((s2, d) => s2 + d.balanceCents, 0), openCount: open.length },
+        installments: { committedThisMonthCents: 0, activePlans: plans.length }, forecast,
+      };
+      return { ...dashboard, ...seed.dashboard };
+    },
+    listRecurring: async () => recurringRules.map(recurringDto),
+    createRecurring: async (input) => {
+      repo.calls.push("createRecurring");
+      const errors = validateRecurring({
+        kind: input.kind, amount: Money.fromCents(input.amountCents), frequency: input.frequency, startDate: input.startDate,
+        endDate: input.endDate, accountId: input.accountId, cardId: input.cardId,
+      });
+      if (errors.length) throw new ApiError(422, errors);
+      const rule: RecurringRule = {
+        id: nextRecurringId++, kind: input.kind, amount: Money.fromCents(input.amountCents), description: input.description,
+        accountId: input.accountId, cardId: input.cardId, categoryId: input.categoryId, personId: input.personId,
+        frequency: input.frequency, startDate: input.startDate, endDate: input.endDate,
+        nextIndex: firstIndexOnOrAfter(input.startDate, input.frequency, today()), active: true,
+      };
+      recurringRules.push(rule);
+      postDueRecurring();
+      return recurringDto(rule);
+    },
+    updateRecurring: async (id, patch) => {
+      repo.calls.push("updateRecurring");
+      const rule = recurringRules.find((r) => r.id === id)!;
+      if (patch.amountCents !== undefined) rule.amount = Money.fromCents(patch.amountCents);
+      if (patch.description !== undefined) rule.description = patch.description;
+      if (patch.categoryId !== undefined) rule.categoryId = patch.categoryId;
+      if (patch.endDate !== undefined) rule.endDate = patch.endDate;
+      if (patch.active !== undefined) {
+        if (patch.active && !rule.active) rule.nextIndex = Math.max(rule.nextIndex, firstIndexOnOrAfter(rule.startDate, rule.frequency, today()));
+        rule.active = patch.active;
+      }
+      return recurringDto(rule);
+    },
+    deleteRecurring: async (id) => {
+      repo.calls.push("deleteRecurring");
+      if (transactions.some((t) => t.recurringId === id)) throw new ApiError(422, ["rule_has_postings"]);
+      recurringRules = recurringRules.filter((r) => r.id !== id);
     },
     listDebts: async () =>
       debtRows.map(debtSummary).sort((a, b) => Number(b.status === "open") - Number(a.status === "open") || a.creditor.localeCompare(b.creditor)),
@@ -382,10 +482,18 @@ export function createFakeRepository(
     cardRows.push(row);
     cycleRules.push({ cardId: row.id, fromMonth: ALWAYS_FROM, closingDay: c.closingDay, dueDay: c.dueDay });
   });
+  seed.recurring?.forEach((r) => {
+    recurringRules.push({
+      id: nextRecurringId++, kind: r.kind, amount: Money.fromCents(r.amountCents), description: r.description, accountId: r.accountId,
+      cardId: r.cardId, categoryId: r.categoryId, personId: r.personId, frequency: r.frequency, startDate: r.startDate,
+      endDate: r.endDate, nextIndex: firstIndexOnOrAfter(r.startDate, r.frequency, today()), active: true,
+    });
+  });
   seed.accounts?.forEach((a) => {
     const account = { ...a, id: nextAccountId++, archived: false };
     accounts.push(account);
   });
   seed.transactions?.forEach((t) => transactions.push(withDefaults(t, nextTransactionId++)));
+  postDueRecurring();
   return repo;
 }

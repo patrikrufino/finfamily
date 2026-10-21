@@ -41,6 +41,8 @@ export interface TransactionDto {
   installmentNumber: number | null;
   /** Debt this expense pays off. */
   debtId: number | null;
+  /** Recurring rule that posted this transaction. */
+  recurringId: number | null;
   description: string;
   status: TransactionStatus;
   personId: number;
@@ -222,9 +224,83 @@ export interface DebtPaymentInput {
   categoryId: number | null;
 }
 
+export type Frequency = "weekly" | "monthly" | "yearly";
+
+export interface RecurringDto {
+  id: number;
+  kind: "income" | "expense";
+  amountCents: number;
+  description: string;
+  accountId: number | null;
+  cardId: number | null;
+  categoryId: number | null;
+  personId: number;
+  frequency: Frequency;
+  startDate: string;
+  endDate: string | null;
+  active: boolean;
+  nextDate: string;
+  postedCount: number;
+  status: "active" | "paused" | "ended";
+}
+
+export interface NewRecurring {
+  kind: "income" | "expense";
+  amountCents: number;
+  description: string;
+  accountId: number | null;
+  cardId: number | null;
+  categoryId: number | null;
+  personId: number;
+  frequency: Frequency;
+  startDate: string;
+  endDate: string | null;
+}
+
+export interface ForecastMonthDto {
+  month: string;
+  incomeCents: number;
+  expenseCents: number;
+  cardPaymentsCents: number;
+  netCents: number;
+  endBalanceCents: number;
+}
+
+export interface DashboardDto {
+  today: string;
+  month: string;
+  balanceCents: number;
+  projectedEndOfMonthCents: number;
+  monthSummary: { incomeCents: number; expenseCents: number; resultCents: number };
+  budget: {
+    totals: { budgetCents: number; spentCents: number; remainingCents: number };
+    highlights: {
+      categoryId: number;
+      name: string;
+      status: BudgetStatus;
+      ratio: number;
+      budgetCents: number;
+      spentCents: number;
+      remainingCents: number;
+    }[];
+  };
+  cardsDue: {
+    cardId: number;
+    name: string;
+    month: string;
+    dueDate: string;
+    remainingCents: number;
+    status: StatementStatus;
+    overdue: boolean;
+  }[];
+  debts: { totalOwedCents: number; openCount: number };
+  installments: { committedThisMonthCents: number; activePlans: number };
+  forecast: ForecastMonthDto[];
+}
+
 export type NewCategory = Pick<CategoryDto, "name" | "kind">;
 
-type CardFields = "cardId" | "statementMonth" | "feeKind" | "adjustment" | "planId" | "installmentNumber" | "debtId";
+type CardFields = "cardId" | "statementMonth" | "feeKind" | "adjustment" | "planId" | "installmentNumber" | "debtId" | "recurringId";
 /** Card-related fields default to null when omitted. */
 export type NewTransaction = Omit<TransactionDto, "id" | CardFields> & Partial<Pick<TransactionDto, CardFields>>;
 export type NewAccount = Pick<AccountDto, "name" | "type" | "initialBalanceCents">;
@@ -270,6 +346,14 @@ export interface FinanceRepository {
   /** Without a month, returns the statement that is currently open. */
   getStatement(cardId: number, month?: string): Promise<StatementDto>;
   payStatement(cardId: number, month: string, input: StatementPaymentInput): Promise<StatementDto>;
+  getDashboard(): Promise<DashboardDto>;
+  listRecurring(): Promise<RecurringDto[]>;
+  createRecurring(input: NewRecurring): Promise<RecurringDto>;
+  updateRecurring(
+    id: number,
+    patch: Partial<Pick<RecurringDto, "amountCents" | "description" | "categoryId" | "endDate" | "active">>,
+  ): Promise<RecurringDto>;
+  deleteRecurring(id: number): Promise<void>;
   listDebts(): Promise<DebtDto[]>;
   getDebt(id: number): Promise<DebtDetailDto>;
   createDebt(input: NewDebt): Promise<DebtDetailDto>;

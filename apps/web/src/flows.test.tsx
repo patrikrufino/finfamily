@@ -555,3 +555,207 @@ describe("debts flow", () => {
     expect(await screen.findByText("Nenhuma dívida cadastrada.")).toBeInTheDocument();
   });
 });
+
+describe("dashboard", () => {
+  const month = today.slice(0, 7);
+  const dashSeed = async (extra: Parameters<typeof createFakeRepository>[0] = {}) => {
+    const repo = createFakeRepository({
+      accounts: [{ name: "Conta Itaú", type: "checking", initialBalanceCents: 100000 }],
+      categories: [{ name: "Mercado", kind: "expense" }],
+      ...extra,
+    });
+    await repo.createTransaction({ kind: "income", amountCents: 500000, date: today, accountId: 1, toAccountId: null, categoryId: null, description: "Salário", status: "settled", personId: 1 });
+    await repo.createTransaction({ kind: "expense", amountCents: 52000, date: today, accountId: 1, toAccountId: null, categoryId: 1, description: "Feira", status: "settled", personId: 1 });
+    return repo;
+  };
+
+  it("shows the month result", async () => {
+    renderWithProviders(<App />, await dashSeed());
+    const section = await screen.findByTestId("month-result");
+    const text = nbsp(section.textContent!);
+    expect(text).toContain("ReceitasR$ 5.000,00");
+    expect(text).toContain("DespesasR$ 520,00");
+    expect(text).toContain("ResultadoR$ 4.480,00");
+  });
+
+  it("compares the budget with spending and highlights what is over", async () => {
+    const repo = await dashSeed();
+    await repo.setBudget(1, month, 50000);
+    renderWithProviders(<App />, repo);
+    const bar = await screen.findByRole("progressbar", { name: "Orçamento do mês" });
+    expect(bar).toHaveAttribute("aria-valuenow", "100");
+    expect(nbsp(screen.getByText(/do orçamento usado/).textContent!)).toContain("104% do orçamento usado");
+    const attention = screen.getByRole("list", { name: "Atenção" });
+    expect(nbsp(attention.textContent!)).toContain("Mercado · Estourado");
+    expect(nbsp(attention.textContent!)).toContain("Estourou em R$ 20,00");
+  });
+
+  it("invites the user to set budgets when there are none", async () => {
+    renderWithProviders(<App />, await dashSeed());
+    expect(await screen.findByText(/Defina orçamentos na aba Orçamento/)).toBeInTheDocument();
+  });
+
+  it("projects the next six months and warns when the balance turns negative", async () => {
+    const repo = await dashSeed({
+      recurring: [{ kind: "expense", amountCents: 900000, description: "Conta enorme", accountId: 1, cardId: null, categoryId: null, personId: 1, frequency: "monthly", startDate: `${month}-28`, endDate: null }],
+    });
+    renderWithProviders(<App />, repo);
+    expect(await screen.findByRole("heading", { name: "Previsão" })).toBeInTheDocument();
+    expect(screen.getAllByTestId(/^forecast-/)).toHaveLength(6);
+    expect(await screen.findByRole("status")).toHaveTextContent(/O saldo previsto fica negativo em/);
+  });
+
+  it("does not warn when the projection stays positive", async () => {
+    renderWithProviders(<App />, await dashSeed());
+    await screen.findByRole("heading", { name: "Previsão" });
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("lists statements due, flags overdue ones and links to the card", async () => {
+    const repo = await dashSeed({
+      dashboard: {
+        cardsDue: [
+          { cardId: 1, name: "Nubank", month: "2026-09", dueDate: "2026-10-05", remainingCents: 60000, status: "closed", overdue: true },
+          { cardId: 2, name: "Visa", month: "2026-10", dueDate: "2026-11-05", remainingCents: 80000, status: "open", overdue: false },
+        ],
+      },
+    });
+    renderWithProviders(<App />, repo);
+    const nubank = await screen.findByRole("link", { name: /Nubank/ });
+    expect(nubank).toHaveAttribute("href", "/cards/1");
+    expect(nubank).toHaveTextContent("Vencida");
+    expect(nbsp(nubank.textContent!)).toContain("R$ 600,00");
+    expect(screen.getByRole("link", { name: /Visa/ })).not.toHaveTextContent("Vencida");
+  });
+
+  it("says when nothing is due", async () => {
+    renderWithProviders(<App />, await dashSeed());
+    expect(await screen.findByText("Nenhuma fatura a vencer nos próximos 30 dias.")).toBeInTheDocument();
+  });
+
+  it("summarizes debts and installments", async () => {
+    const repo = await dashSeed({ dashboard: { installments: { committedThisMonthCents: 25000, activePlans: 2 } } });
+    await repo.createDebt({ creditor: "Banco", originalCents: 100000, categoryId: null, personId: 1 });
+    renderWithProviders(<App />, repo);
+    const debts = await screen.findByRole("link", { name: /Dívidas em aberto/ });
+    expect(nbsp(debts.textContent!)).toContain("R$ 1.000,00");
+    expect(debts).toHaveTextContent("1 dívida");
+    const installments = screen.getByRole("link", { name: /Parcelas ainda a pagar/ });
+    expect(nbsp(installments.textContent!)).toContain("R$ 250,00");
+    expect(installments).toHaveTextContent("2 parcelamentos ativos");
+  });
+});
+
+describe("recurring flow", () => {
+  const recSeed = () =>
+    createFakeRepository({
+      accounts: [{ name: "Conta Itaú", type: "checking", initialBalanceCents: 500000 }],
+      cards: [{ name: "Visa", limitCents: 500000, closingDay: 25, dueDay: 5 }],
+    });
+
+  async function createRent(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole("button", { name: "Novo lançamento" }));
+    const dialog = await screen.findByRole("dialog");
+    await within(dialog).findByRole("option", { name: "Conta Itaú" });
+    await user.type(within(dialog).getByLabelText("Valor"), "1.200,00");
+    await user.type(within(dialog).getByLabelText("Descrição"), "Aluguel");
+    await user.selectOptions(within(dialog).getByLabelText("Repetir"), "Todo mês");
+    expect(within(dialog).queryByLabelText("Nº de parcelas")).not.toBeInTheDocument();
+    expect(within(dialog).queryByLabelText("Já efetivado")).not.toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  }
+
+  it("creates a monthly rule from the quick form; today's occurrence is posted", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, recSeed());
+    await createRent(user);
+    await user.click(screen.getByRole("link", { name: "Lançamentos" }));
+    const item = await screen.findByRole("button", { name: /Aluguel/ });
+    expect(item).toHaveTextContent("Recorrente");
+    await user.click(screen.getByRole("link", { name: "Recorrentes" }));
+    const rule = (await screen.findByText("Aluguel")).closest("li")!;
+    expect(rule).toHaveTextContent("Todo mês");
+    expect(rule).toHaveTextContent("1 lançados");
+    expect(rule).toHaveTextContent("Ativa");
+  });
+
+  it("hides repetition when installments are typed", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, recSeed());
+    await user.click(screen.getByRole("button", { name: "Novo lançamento" }));
+    const dialog = await screen.findByRole("dialog");
+    await within(dialog).findByRole("option", { name: "Conta Itaú" });
+    await user.type(within(dialog).getByLabelText("Valor"), "300,00");
+    await user.type(within(dialog).getByLabelText("Nº de parcelas"), "3");
+    expect(within(dialog).queryByLabelText("Repetir")).not.toBeInTheDocument();
+  });
+
+  it("offers repetition for income but not for transfers", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, recSeed());
+    await user.click(screen.getByRole("button", { name: "Novo lançamento" }));
+    const dialog = await screen.findByRole("dialog");
+    await within(dialog).findByRole("option", { name: "Conta Itaú" });
+    await user.click(within(dialog).getByRole("radio", { name: "Receita" }));
+    expect(within(dialog).getByLabelText("Repetir")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("radio", { name: "Transferência" }));
+    expect(within(dialog).queryByLabelText("Repetir")).not.toBeInTheDocument();
+  });
+
+  it("pauses, resumes, edits and (when nothing was posted) deletes a rule", async () => {
+    const user = userEvent.setup();
+    const repo = recSeed();
+    await repo.createRecurring({
+      kind: "income", amountCents: 300000, description: "Salário", accountId: 1, cardId: null, categoryId: null, personId: 1,
+      frequency: "monthly", startDate: "2099-01-05", endDate: null,
+    });
+    renderWithProviders(<App />, repo, "/recurring");
+    const rule = () => screen.getByText("Salário").closest("li")!;
+    await screen.findByText("Salário");
+    await user.click(within(rule()).getByRole("button", { name: /Pausar Salário/ }));
+    await waitFor(() => expect(rule()).toHaveTextContent("Pausada"));
+    await user.click(within(rule()).getByRole("button", { name: /Retomar Salário/ }));
+    await waitFor(() => expect(rule()).toHaveTextContent("Ativa"));
+
+    await user.click(within(rule()).getByRole("button", { name: /Editar Salário/ }));
+    const dialog = await screen.findByRole("dialog");
+    const amount = within(dialog).getByLabelText("Valor");
+    await user.clear(amount);
+    await user.type(amount, "3.500,00");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(nbsp(rule().textContent!)).toContain("R$ 3.500,00"));
+
+    await user.click(within(rule()).getByRole("button", { name: /Excluir Salário/ }));
+    await waitFor(() => expect(screen.queryByText("Salário")).not.toBeInTheDocument());
+  });
+
+  it("does not offer deleting a rule that already posted", async () => {
+    const repo = recSeed();
+    await repo.createRecurring({
+      kind: "expense", amountCents: 120000, description: "Aluguel", accountId: 1, cardId: null, categoryId: null, personId: 1,
+      frequency: "monthly", startDate: today, endDate: null,
+    });
+    renderWithProviders(<App />, repo, "/recurring");
+    const rule = (await screen.findByText("Aluguel")).closest("li")!;
+    expect(within(rule).queryByRole("button", { name: /Excluir/ })).not.toBeInTheDocument();
+    expect(within(rule).getByRole("button", { name: /Pausar Aluguel/ })).toBeInTheDocument();
+  });
+
+  it("explains that a rule needs a description-free amount and validates the edit", async () => {
+    const user = userEvent.setup();
+    const repo = recSeed();
+    await repo.createRecurring({
+      kind: "expense", amountCents: 10000, description: "Academia", accountId: 1, cardId: null, categoryId: null, personId: 1,
+      frequency: "monthly", startDate: "2099-01-05", endDate: null,
+    });
+    renderWithProviders(<App />, repo, "/recurring");
+    await user.click(await screen.findByRole("button", { name: /Editar Academia/ }));
+    const dialog = await screen.findByRole("dialog");
+    const amount = within(dialog).getByLabelText("Valor");
+    await user.clear(amount);
+    await user.type(amount, "abc");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    expect(await within(dialog).findByText("Informe um valor válido.")).toBeInTheDocument();
+  });
+});

@@ -15,8 +15,7 @@
     "transactions": "Transactions",
     "budget": "Budget",
     "cards": "Cards",
-    "debts": "Debts",
-    "comingSoon": "Coming soon"
+    "debts": "Debts"
   },
   "theme": {
     "dark": "Dark theme"
@@ -92,7 +91,8 @@
     "category": "Category",
     "noCategory": "No category",
     "accountOrCard": "Account or card",
-    "adjustment": "Balance adjustment"
+    "adjustment": "Balance adjustment",
+    "recurring": "Recurring"
   },
   "errors": {
     "invalid_amount": "Enter a valid amount.",
@@ -145,7 +145,15 @@
     "discount_above_balance": "The discount cannot exceed the balance owed.",
     "balance_would_be_negative": "Removing this would make the balance negative: payments depend on it.",
     "debt_has_payments": "The debt has payments and cannot be deleted.",
-    "entry_not_found": "Entry not found."
+    "entry_not_found": "Entry not found.",
+    "rule_not_found": "Recurring item not found.",
+    "rule_has_postings": "This recurring item already posted entries; pause it instead of deleting.",
+    "invalid_recurring": "Invalid recurring data.",
+    "end_before_start": "The end cannot be before the start.",
+    "recurring_source_required": "Choose an account or a card.",
+    "recurring_single_source": "Choose only one account or card.",
+    "recurring_income_needs_account": "Recurring income must go to an account.",
+    "recurring_and_installments": "Choose installments or repeating, not both."
   },
   "budget": {
     "total": "Budgeted",
@@ -303,5 +311,74 @@
     "hintDiscount": "A discount reduces the balance without moving money.",
     "hintPay": "Creates an expense on the chosen account and lowers the balance.",
     "view": "View debt"
+  },
+  "dashboard": {
+    "month": "This month",
+    "income": "Income",
+    "expenses": "Expenses",
+    "result": "Result",
+    "budgetTitle": "Budget this month",
+    "budgetUsed": "{{percent}}% of the budget used",
+    "budgetOf": "{{spent}} of {{budget}}",
+    "noBudget": "Set budgets in the Budget tab to follow them here.",
+    "attention": "Attention",
+    "near": "Close to the limit",
+    "over": "Over budget",
+    "left": "{{amount}} left",
+    "exceeded": "Over by {{amount}}",
+    "dueTitle": "Statements due",
+    "dueOn": "Due {{date}}",
+    "overdue": "Overdue",
+    "nothingDue": "No statements due in the next 30 days.",
+    "commitments": "Commitments",
+    "installmentsMonth": "Installments still to pay this month",
+    "plans": "{{count}} active installment plan",
+    "plans_other": "{{count}} active installment plans",
+    "debtsOwed": "Open debts",
+    "debtsCount": "{{count}} debt",
+    "debtsCount_other": "{{count}} debts",
+    "forecastTitle": "Forecast",
+    "forecastNote": "Counts scheduled items, installments, recurring ones and card statements on their due date.",
+    "fIncome": "Income",
+    "fExpenses": "Expenses",
+    "fCards": "Cards",
+    "endBalance": "Projected balance",
+    "currentMonth": "rest of the month",
+    "negativeWarning": "The projected balance turns negative in {{month}}.",
+    "projectedEnd": "Projected for the end of the month",
+    "overdueSince": "Overdue since {{date}}"
+  },
+  "recurring": {
+    "title": "Recurring",
+    "empty": "No recurring items yet. Use \"Repeat\" when creating a transaction.",
+    "repeat": "Repeat",
+    "none": "Do not repeat",
+    "frequency": {
+      "weekly": "Every week",
+      "monthly": "Every month",
+      "yearly": "Every year"
+    },
+    "repeatHint": "Starts on the given date and posts itself on every occurrence.",
+    "next": "Next: {{date}}",
+    "posted": "{{count}} posted",
+    "status": {
+      "active": "Active",
+      "paused": "Paused",
+      "ended": "Ended"
+    },
+    "pause": "Pause",
+    "resume": "Resume",
+    "edit": "Edit recurring item",
+    "delete": "Delete",
+    "endDate": "Ends on (optional)",
+    "editHint": "The change applies to the next postings; what was already posted does not change.",
+    "back": "Back",
+    "amount": "Amount",
+    "description": "Description",
+    "badge": "Recurring",
+    "incomeLabel": "Income",
+    "expenseLabel": "Expense",
+    "active": "Active",
+    "inactive": "Paused and ended"
   }
 }

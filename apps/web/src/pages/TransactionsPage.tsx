@@ -39,7 +39,10 @@ export function TransactionsPage() {
     <div className={css({ display: "grid", gap: "4" })}>
       <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center" })}>
         <h1 className={css({ fontSize: "xl", fontWeight: "bold" })}>{t("pages.transactions")}</h1>
-        <Link to="/installments" className={css({ color: "primary", fontSize: "sm" })}>{t("installments.title")}</Link>
+        <span className={css({ display: "flex", gap: "3" })}>
+          <Link to="/recurring" className={css({ color: "primary", fontSize: "sm" })}>{t("recurring.title")}</Link>
+          <Link to="/installments" className={css({ color: "primary", fontSize: "sm" })}>{t("installments.title")}</Link>
+        </span>
       </div>
 
       <MonthNavigator month={vm.month} onPrevious={vm.previousMonth} onNext={vm.nextMonth} />
@@ -89,7 +92,7 @@ export function TransactionsPage() {
                   <span className={css({ color: "muted", fontSize: "sm" })}>
                     {formatDate(tx.date)} · {source}
                     {tx.toAccountId ? ` → ${accountName(tx.toAccountId)}` : ""}{categoryName(tx.categoryId) ? ` · ${categoryName(tx.categoryId)}` : ""} · {personName(tx.personId)}
-                    {tx.status === "scheduled" ? ` · ${t("transactions.scheduled")}` : ""}
+                    {tx.status === "scheduled" ? ` · ${t("transactions.scheduled")}` : ""}{tx.recurringId !== null ? ` · ${t("transactions.recurring")}` : ""}
                   </span>
                 </span>
                 <MoneyText
