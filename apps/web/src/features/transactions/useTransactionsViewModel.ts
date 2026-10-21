@@ -24,6 +24,8 @@ export function useTransactionsViewModel(initialMonth: string = currentMonth()) 
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
     queryClient.invalidateQueries({ queryKey: ["accounts"] });
     queryClient.invalidateQueries({ queryKey: ["budget"] });
+    queryClient.invalidateQueries({ queryKey: ["cards"] });
+    queryClient.invalidateQueries({ queryKey: ["statement"] });
   };
 
   const query = useQuery({

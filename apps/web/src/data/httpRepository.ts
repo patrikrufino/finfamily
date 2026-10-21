@@ -2,6 +2,8 @@ import {
   ApiError,
   type AccountDto,
   type BudgetReportDto,
+  type CardDto,
+  type StatementDto,
   type CategoryDto,
   type FinanceRepository,
   type PersonDto,
@@ -30,11 +32,12 @@ export const httpRepository: FinanceRepository = {
   listAccounts: () => request<AccountDto[]>("/api/accounts"),
   createAccount: (input) => request<AccountDto>("/api/accounts", send("POST", input)),
   updateAccount: (id, patch) => request<AccountDto>(`/api/accounts/${id}`, send("PATCH", patch)),
-  listTransactions: ({ month, accountId, personId, categoryId }) => {
+  listTransactions: ({ month, accountId, personId, categoryId, cardId }) => {
     const qs = new URLSearchParams({ month });
     if (accountId) qs.set("accountId", String(accountId));
     if (personId) qs.set("personId", String(personId));
     if (categoryId) qs.set("categoryId", String(categoryId));
+    if (cardId) qs.set("cardId", String(cardId));
     return request<TransactionDto[]>(`/api/transactions?${qs}`);
   },
   createTransaction: (input) => request<TransactionDto>("/api/transactions", send("POST", input)),
@@ -46,4 +49,12 @@ export const httpRepository: FinanceRepository = {
   setBudget: (categoryId, month, amountCents) =>
     request<void>(`/api/budgets/${categoryId}`, send("PUT", { month, amountCents })),
   getBudget: (month) => request<BudgetReportDto>(`/api/budget?month=${month}`),
+  listCards: () => request<CardDto[]>("/api/cards"),
+  createCard: (input) => request<CardDto>("/api/cards", send("POST", input)),
+  updateCard: (id, patch) => request<CardDto>(`/api/cards/${id}`, send("PATCH", patch)),
+  setCardRule: (cardId, rule) => request<void>(`/api/cards/${cardId}/rules`, send("POST", rule)),
+  getStatement: (cardId, month) =>
+    request<StatementDto>(`/api/cards/${cardId}/statement${month ? `?month=${month}` : ""}`),
+  payStatement: (cardId, month, input) =>
+    request<StatementDto>(`/api/cards/${cardId}/statements/${month}/payments`, send("POST", input)),
 };

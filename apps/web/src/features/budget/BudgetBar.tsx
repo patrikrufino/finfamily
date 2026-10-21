@@ -1,11 +1,12 @@
 import type { BudgetStatus } from "@finfamily/domain";
 import { css } from "../../../styled-system/css";
 
-const COLORS: Record<BudgetStatus, string> = {
-  none: "border",
-  ok: "primary",
-  warning: "orange.400",
-  over: "red.500",
+// Each css() call is written out literally so Panda's static extraction generates every color.
+const FILL: Record<BudgetStatus, string> = {
+  none: css({ height: "100%", background: "border" }),
+  ok: css({ height: "100%", background: "primary" }),
+  warning: css({ height: "100%", background: "orange.400" }),
+  over: css({ height: "100%", background: "red.500" }),
 };
 
 export function BudgetBar({ ratio, status, label }: { ratio: number; status: BudgetStatus; label: string }) {
@@ -19,7 +20,7 @@ export function BudgetBar({ ratio, status, label }: { ratio: number; status: Bud
       aria-valuenow={percent}
       className={css({ height: "2", borderRadius: "full", background: "border", overflow: "hidden" })}
     >
-      <div className={css({ height: "100%", background: COLORS[status] })} style={{ width: `${percent}%` }} />
+      <div className={FILL[status]} style={{ width: `${percent}%` }} />
     </div>
   );
 }

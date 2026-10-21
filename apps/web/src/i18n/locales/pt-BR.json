@@ -77,7 +77,8 @@
     "incomeTotal": "Receitas",
     "expenseTotal": "Despesas",
     "category": "Categoria",
-    "noCategory": "Sem categoria"
+    "noCategory": "Sem categoria",
+    "accountOrCard": "Conta ou cartão"
   },
   "errors": {
     "invalid_amount": "Informe um valor válido.",
@@ -95,7 +96,19 @@
     "category_archived": "Categoria arquivada.",
     "category_name_taken": "Já existe uma categoria ativa com esse nome.",
     "category_used_by_income": "Há receitas nessa categoria; ela precisa continuar aceitando receitas.",
-    "category_not_found": "Categoria não encontrada."
+    "category_not_found": "Categoria não encontrada.",
+    "card_not_found": "Cartão não encontrado.",
+    "card_name_taken": "Já existe um cartão ativo com esse nome.",
+    "invalid_card": "Dados do cartão inválidos.",
+    "invalid_day": "Informe um dia de 1 a 31.",
+    "rule_in_past": "A regra não pode começar antes da fatura aberta.",
+    "statement_empty": "Esta fatura não tem compras.",
+    "invalid_payment": "Dados do pagamento inválidos.",
+    "invalid_rule": "Regra inválida.",
+    "card_purchase_must_be_expense": "No cartão só cabem despesas.",
+    "transfer_single_destination": "Escolha só uma conta de destino.",
+    "statement_month_required": "Informe a fatura.",
+    "fee_needs_statement": "Juros e multa precisam de uma fatura."
   },
   "budget": {
     "total": "Orçado",
@@ -124,5 +137,51 @@
       "warning": "Quase no limite",
       "over": "Estourado"
     }
+  },
+  "cards": {
+    "title": "Cartões",
+    "new": "Novo cartão",
+    "name": "Nome",
+    "limit": "Limite",
+    "closingDay": "Dia de fechamento",
+    "dueDay": "Dia de vencimento",
+    "available": "Disponível",
+    "used": "Usado",
+    "openStatement": "Fatura aberta",
+    "dueOn": "Vence em {{date}}",
+    "empty": "Nenhum cartão ainda. Cadastre o primeiro.",
+    "back": "Voltar",
+    "period": "Período",
+    "closesOn": "Fecha em",
+    "total": "Total",
+    "paid": "Pago",
+    "remaining": "Restante",
+    "fees": "Juros e multa",
+    "pay": "Pagar fatura",
+    "changeClosing": "Alterar fechamento",
+    "payFrom": "Pagar com a conta",
+    "amount": "Valor pago",
+    "interest": "Juros",
+    "fine": "Multa",
+    "date": "Data do pagamento",
+    "validFrom": "Vale a partir da fatura de",
+    "ruleHint": "Faturas já fechadas não mudam. A nova regra vale da fatura escolhida em diante.",
+    "purchases": "Compras",
+    "payments": "Pagamentos",
+    "feeItems": "Juros e multas",
+    "noPurchases": "Nenhuma compra nesta fatura.",
+    "removePayment": "Excluir",
+    "statementPayment": "Pagamento da fatura",
+    "fee": {
+      "interest": "Juros",
+      "fine": "Multa"
+    },
+    "status": {
+      "open": "Aberta",
+      "closed": "Fechada",
+      "paid": "Paga"
+    },
+    "archive": "Arquivar cartão",
+    "limitUsage": "Uso do limite"
   }
 }

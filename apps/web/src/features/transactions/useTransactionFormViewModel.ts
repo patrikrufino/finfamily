@@ -9,7 +9,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useRepository } from "../../data/RepositoryContext";
-import type { TransactionDto } from "../../data/types";
+import type { NewTransaction, TransactionDto } from "../../data/types";
 import { useLocale } from "../../shared/useLocale";
 import { usePersonViewModel } from "../people/usePersonViewModel";
 
@@ -18,11 +18,15 @@ export interface TransactionFormValues {
   amountText: string;
   date: string;
   accountId: number | null;
+  /** Set when an expense is charged to a credit card instead of an account. */
+  cardId: number | null;
   toAccountId: number | null;
   categoryId: number | null;
   description: string;
   settled: boolean;
 }
+
+export type PaymentSource = { type: "account" | "card"; id: number };
 
 export type FormError = TransactionError | "invalid_amount" | "account_required" | "person_unknown";
 
@@ -41,11 +45,13 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
   const { person } = usePersonViewModel();
 
   const accountsQuery = useQuery({ queryKey: ["accounts"], queryFn: () => repository.listAccounts() });
+  const cardsQuery = useQuery({ queryKey: ["cards"], queryFn: () => repository.listCards() });
   const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: () => repository.listCategories() });
   const peopleQuery = useQuery({ queryKey: ["people"], queryFn: () => repository.listPeople() });
   const accounts = accountsQuery.data ?? [];
   const people = peopleQuery.data ?? [];
   const allCategories = categoriesQuery.data ?? [];
+  const cards = cardsQuery.data ?? [];
 
   const [edited, setEdited] = useState<Partial<TransactionFormValues>>({});
   const [errors, setErrors] = useState<FormError[]>([]);
@@ -59,6 +65,7 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
           .trim(),
         date: transaction.date,
         accountId: transaction.accountId,
+        cardId: transaction.cardId,
         toAccountId: transaction.toAccountId,
         categoryId: transaction.categoryId,
         description: transaction.description,
@@ -69,6 +76,7 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
         amountText: "",
         date: today,
         accountId: accounts[0]?.id ?? null,
+        cardId: null,
         toAccountId: null,
         categoryId: null,
         description: "",
@@ -78,15 +86,20 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
   const categories = allCategories.filter((c) => categoryAllows(c, merged.kind));
   // A category that no longer fits the kind (or is not loaded yet) is treated as unset.
   const categoryId = categories.some((c) => c.id === merged.categoryId) ? merged.categoryId : null;
-  const values: TransactionFormValues = { ...merged, categoryId };
+  // Only expenses can be charged to a card; any other kind goes back to an account.
+  const cardId = merged.kind === "expense" ? merged.cardId : null;
+  const accountId = cardId !== null ? null : (merged.accountId ?? accounts[0]?.id ?? null);
+  const values: TransactionFormValues = { ...merged, categoryId, cardId, accountId };
 
   const save = useMutation({
-    mutationFn: (input: Omit<TransactionDto, "id">) =>
+    mutationFn: (input: NewTransaction) =>
       transaction ? repository.updateTransaction(transaction.id, input) : repository.createTransaction(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
       queryClient.invalidateQueries({ queryKey: ["budget"] });
+      queryClient.invalidateQueries({ queryKey: ["cards"] });
+      queryClient.invalidateQueries({ queryKey: ["statement"] });
     },
   });
 
@@ -103,14 +116,15 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
     const amount = Money.parse(values.amountText, locale);
     const personId = people.find((p) => p.name.toLowerCase() === person)?.id;
     if (!amount) found.push("invalid_amount");
-    if (values.accountId === null) found.push("account_required");
+    if (values.accountId === null && values.cardId === null) found.push("account_required");
     if (personId === undefined) found.push("person_unknown");
-    if (amount && values.accountId !== null && personId !== undefined) {
+    if (amount && (values.accountId !== null || values.cardId !== null) && personId !== undefined) {
       const input = {
         kind: values.kind,
         amountCents: amount.cents,
         date: values.date,
         accountId: values.accountId,
+        cardId: values.cardId,
         toAccountId: values.kind === "transfer" ? values.toAccountId : null,
         categoryId: values.categoryId,
         description: values.description.trim(),
@@ -129,5 +143,13 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
     return false;
   }
 
-  return { values, setField, errors, submit, accounts, categories, isSaving: save.isPending };
+  function setSource(source: PaymentSource) {
+    setEdited((prev) => ({
+      ...prev,
+      accountId: source.type === "account" ? source.id : null,
+      cardId: source.type === "card" ? source.id : null,
+    }));
+  }
+
+  return { values, setField, setSource, errors, submit, accounts, cards, categories, isSaving: save.isPending };
 }
