@@ -4,6 +4,7 @@ import { css } from "../../styled-system/css";
 import { useQuery } from "@tanstack/react-query";
 import { useRepository } from "../data/RepositoryContext";
 import type { TransactionDto } from "../data/types";
+import { categoryLabel } from "../features/categories/CategoryIcon";
 import { TransactionDialog } from "../features/transactions/TransactionDialog";
 import { Link } from "react-router";
 import { useTransactionsViewModel } from "../features/transactions/useTransactionsViewModel";
@@ -30,7 +31,10 @@ export function TransactionsPage() {
   /** Payments and fees belong to a statement; they are managed from the card screen, not edited here. */
   const statementTitle = (tx: TransactionDto) =>
     tx.feeKind ? `${t(`cards.fee.${tx.feeKind}`)} · ${cardName(tx.cardId)}` : `${t("cards.statementPayment")} · ${cardName(tx.cardId)}`;
-  const categoryName = (id: number | null) => categories.find((c) => c.id === id)?.name;
+  const categoryName = (id: number | null) => {
+    const c = categories.find((x) => x.id === id);
+    return c ? categoryLabel(c) : undefined;
+  };
   const personName = (id: number) => people.find((p) => p.id === id)?.name ?? "";
   const formatDate = (iso: string) =>
     new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short", timeZone: "UTC" }).format(new Date(`${iso}T00:00:00Z`));

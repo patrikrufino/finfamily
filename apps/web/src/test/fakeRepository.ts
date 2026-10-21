@@ -1,5 +1,6 @@
 import {
   ALWAYS_FROM,
+  DEFAULT_CATEGORIES,
   accountBalance,
   balanceAdjustment,
   budgetForMonth,
@@ -306,7 +307,7 @@ export function createFakeRepository(
         budget: {
           totals: budget.totals,
           highlights: budget.categories.filter((c) => c.status === "warning" || c.status === "over")
-            .map(({ categoryId, name, status, ratio, budgetCents, spentCents, remainingCents }) => ({ categoryId, name, status, ratio, budgetCents, spentCents, remainingCents })),
+            .map(({ categoryId, name, icon, status, ratio, budgetCents, spentCents, remainingCents }) => ({ categoryId, name, icon, status, ratio, budgetCents, spentCents, remainingCents })),
         },
         cardsDue: [], debts: { totalOwedCents: open.reduce((s2, d) => s2 + d.balanceCents, 0), openCount: open.length },
         installments: { committedThisMonthCents: 0, activePlans: plans.length }, forecast,
@@ -442,19 +443,32 @@ export function createFakeRepository(
     listCategories: async () => categories.filter((c) => !c.archived),
     createCategory: async (input) => {
       repo.calls.push("createCategory");
-      if (categories.some((c) => !c.archived && c.name.toLowerCase() === input.name.toLowerCase())) {
+      if (categories.some((c) => !c.archived && c.kind === input.kind && c.name.toLowerCase() === input.name.toLowerCase())) {
         throw new ApiError(409, ["category_name_taken"]);
       }
-      const category = { ...input, id: nextCategoryId++, archived: false };
+      const category: CategoryDto = { name: input.name, kind: input.kind, icon: input.icon ?? null, id: nextCategoryId++, archived: false };
       categories.push(category);
       return category;
     },
     updateCategory: async (id, patch) => {
-      categories = categories.map((c) => (c.id === id ? { ...c, ...patch } : c));
-      return categories.find((c) => c.id === id)!;
+      repo.calls.push("updateCategory");
+      const current = categories.find((c) => c.id === id)!;
+      const next = { ...current, ...patch };
+      if (!next.archived && categories.some((c) => c.id !== id && !c.archived && c.kind === current.kind && c.name.toLowerCase() === next.name.toLowerCase())) {
+        throw new ApiError(409, ["category_name_taken"]);
+      }
+      categories = categories.map((c) => (c.id === id ? next : c));
+      return next;
+    },
+    addDefaultCategories: async () => {
+      repo.calls.push("addDefaultCategories");
+      const missing = DEFAULT_CATEGORIES.filter((d) => !categories.some((c) => c.kind === d.kind && c.name.toLowerCase() === d.name.toLowerCase()));
+      for (const d of missing) categories.push({ id: nextCategoryId++, name: d.name, kind: d.kind, icon: d.icon, archived: false });
+      return { created: missing.length };
     },
     setBudget: async (categoryId, month, amountCents) => {
       repo.calls.push("setBudget");
+      if (categories.find((c) => c.id === categoryId)?.kind !== "expense") throw new ApiError(422, ["budget_only_for_expense"]);
       const existing = budgetEntries.find((e) => e.categoryId === categoryId && e.fromMonth === month);
       if (existing) existing.amount = Money.fromCents(amountCents);
       else budgetEntries.push({ categoryId, fromMonth: month, amount: Money.fromCents(amountCents) });
@@ -463,14 +477,14 @@ export function createFakeRepository(
       const inMonth = transactions.filter((t) => t.kind === "expense" && t.date.startsWith(`${month}-`));
       const sum = (categoryId: number | null, status: string) =>
         inMonth.filter((t) => t.categoryId === categoryId && t.status === status).reduce((s, t) => s + t.amountCents, 0);
-      const rows = categories.filter((c) => !c.archived).map((c) => {
+      const rows = categories.filter((c) => !c.archived && c.kind === "expense").map((c) => {
         const p = budgetProgress(
           budgetForMonth(budgetEntries, c.id, month),
           Money.fromCents(sum(c.id, "settled")),
           Money.fromCents(sum(c.id, "scheduled")),
         );
         return {
-          categoryId: c.id, name: c.name, kind: c.kind, archived: c.archived,
+          categoryId: c.id, name: c.name, kind: c.kind, icon: c.icon, archived: c.archived,
           budgetCents: p.budget.cents, spentCents: p.spent.cents, committedCents: p.committed.cents,
           remainingCents: p.remaining.cents, availableAfterCommittedCents: p.availableAfterCommitted.cents,
           ratio: p.ratio, status: p.status,
@@ -490,7 +504,7 @@ export function createFakeRepository(
     },
   };
 
-  seed.categories?.forEach((c) => categories.push({ ...c, id: nextCategoryId++, archived: false }));
+  seed.categories?.forEach((c) => categories.push({ name: c.name, kind: c.kind, icon: c.icon ?? null, id: nextCategoryId++, archived: false }));
   seed.cards?.forEach((c) => {
     const row = { id: nextCardId++, name: c.name, limitCents: c.limitCents, archived: false };
     cardRows.push(row);

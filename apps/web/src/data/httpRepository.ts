@@ -55,6 +55,7 @@ export const httpRepository: FinanceRepository = {
   listCategories: () => request<CategoryDto[]>("/api/categories"),
   createCategory: (input) => request<CategoryDto>("/api/categories", send("POST", input)),
   updateCategory: (id, patch) => request<CategoryDto>(`/api/categories/${id}`, send("PATCH", patch)),
+  addDefaultCategories: () => request<{ created: number }>("/api/categories/defaults", send("POST")),
   setBudget: (categoryId, month, amountCents) =>
     request<void>(`/api/budgets/${categoryId}`, send("PUT", { month, amountCents })),
   getBudget: (month) => request<BudgetReportDto>(`/api/budget?month=${month}`),

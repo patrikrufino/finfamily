@@ -84,17 +84,20 @@ describe("main flows", () => {
 });
 
 describe("budget flow", () => {
-  it("creates a category with a budget, records an expense and shows progress", async () => {
+  it("creates an expense category with an icon, sets its budget, records an expense and shows progress", async () => {
     const user = userEvent.setup();
     renderWithProviders(<App />, seeded());
     await user.click(screen.getByRole("link", { name: "Orçamento" }));
+    await user.click(await screen.findByRole("link", { name: "Gerenciar categorias" }));
 
     await user.click(await screen.findByRole("button", { name: "Nova categoria" }));
     let dialog = await screen.findByRole("dialog");
     await user.type(within(dialog).getByLabelText("Nome"), "Mercado");
+    await user.click(within(dialog).getByRole("radio", { name: "🛒" }));
     await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
 
+    await user.click(screen.getByRole("link", { name: /Voltar/ }));
     await user.click(await screen.findByRole("button", { name: /Mercado/ }));
     dialog = await screen.findByRole("dialog");
     await user.type(within(dialog).getByLabelText("Valor mensal"), "800,00");
@@ -103,9 +106,9 @@ describe("budget flow", () => {
 
     await user.click(screen.getByRole("button", { name: "Novo lançamento" }));
     dialog = await screen.findByRole("dialog");
-    await within(dialog).findByRole("option", { name: "Mercado" });
+    await within(dialog).findByRole("option", { name: "🛒 Mercado" });
     await user.type(within(dialog).getByLabelText("Valor"), "200,00");
-    await user.selectOptions(within(dialog).getByLabelText("Categoria"), "Mercado");
+    await user.selectOptions(within(dialog).getByLabelText("Categoria"), "🛒 Mercado");
     await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
 
@@ -114,23 +117,139 @@ describe("budget flow", () => {
     const row = screen.getByRole("button", { name: /Mercado/ });
     expect(nbsp(row.textContent!)).toContain("Restante: R$ 600,00");
     expect(row.textContent).toContain("25% usado");
+    expect(row.textContent).toContain("🛒");
   });
 
-  it("offers income categories only for income and hides the field for transfers", async () => {
+  it("offers only categories of the matching kind and hides the field for transfers", async () => {
     const user = userEvent.setup();
     const repo = createFakeRepository({
       accounts: [{ name: "Conta Itaú", type: "checking", initialBalanceCents: 0 }],
-      categories: [{ name: "Mercado", kind: "expense" }, { name: "Salário", kind: "both" }],
+      categories: [{ name: "Mercado", kind: "expense", icon: "🛒" }, { name: "Salário", kind: "income", icon: "💼" }],
     });
     renderWithProviders(<App />, repo);
     await user.click(screen.getByRole("button", { name: "Novo lançamento" }));
     const dialog = await screen.findByRole("dialog");
     const select = await within(dialog).findByLabelText("Categoria");
-    expect(within(select).getAllByRole("option").map((o) => o.textContent)).toEqual(["Sem categoria", "Mercado", "Salário"]);
+    expect(within(select).getAllByRole("option").map((o) => o.textContent)).toEqual(["Sem categoria", "🛒 Mercado"]);
     await user.click(within(dialog).getByRole("radio", { name: "Receita" }));
-    expect(within(within(dialog).getByLabelText("Categoria")).getAllByRole("option").map((o) => o.textContent)).toEqual(["Sem categoria", "Salário"]);
+    expect(within(within(dialog).getByLabelText("Categoria")).getAllByRole("option").map((o) => o.textContent)).toEqual(["Sem categoria", "💼 Salário"]);
     await user.click(within(dialog).getByRole("radio", { name: "Transferência" }));
     expect(within(dialog).queryByLabelText("Categoria")).not.toBeInTheDocument();
+  });
+
+  it("does not list income categories in the budget", async () => {
+    const repo = createFakeRepository({ categories: [{ name: "Mercado", kind: "expense" }, { name: "Salário", kind: "income" }] });
+    renderWithProviders(<App />, repo, "/budget");
+    await screen.findByRole("button", { name: /Mercado/ });
+    expect(screen.queryByRole("button", { name: /Salário/ })).not.toBeInTheDocument();
+  });
+});
+
+describe("categories screen", () => {
+  const catSeed = () =>
+    createFakeRepository({
+      categories: [
+        { name: "Mercado", kind: "expense", icon: "🛒" },
+        { name: "Carro", kind: "expense", icon: "🚗" },
+        { name: "Salário", kind: "income", icon: "💼" },
+      ],
+    });
+
+  it("separates expenses and income in tabs", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, catSeed(), "/categories");
+    expect(await screen.findByRole("tab", { name: "Despesas", selected: true })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Editar categoria: Mercado/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Salário/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Receitas" }));
+    expect(screen.getByRole("button", { name: /Editar categoria: Salário/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Mercado/ })).not.toBeInTheDocument();
+  });
+
+  it("creates an income category with an icon picked from the list", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, catSeed(), "/categories");
+    await user.click(await screen.findByRole("tab", { name: "Receitas" }));
+    await user.click(screen.getByRole("button", { name: "Nova categoria" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText(/Categoria de receita/)).toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText("Nome"), "Projetos");
+    expect(within(dialog).getByRole("radio", { name: "Sem ícone", checked: true })).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("radio", { name: "💻" }));
+    expect(within(dialog).getByRole("radio", { name: "💻", checked: true })).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    const item = await screen.findByRole("button", { name: /Editar categoria: Projetos/ });
+    expect(item).toHaveTextContent("💻");
+  });
+
+  it("groups the icons by theme", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, catSeed(), "/categories");
+    await user.click(await screen.findByRole("button", { name: "Nova categoria" }));
+    const dialog = await screen.findByRole("dialog");
+    for (const group of ["Dinheiro", "Casa", "Contas e assinaturas", "Comida", "Saúde", "Dívidas"]) {
+      expect(within(dialog).getByText(group)).toBeInTheDocument();
+    }
+  });
+
+  it("edits the name and icon, and archives", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, catSeed(), "/categories");
+    await user.click(await screen.findByRole("button", { name: /Editar categoria: Mercado/ }));
+    let dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText(/O tipo não muda depois de criada/)).toBeInTheDocument();
+    const name = within(dialog).getByLabelText("Nome");
+    await user.clear(name);
+    await user.type(name, "Supermercado");
+    await user.click(within(dialog).getByRole("radio", { name: "🍎" }));
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    const item = await screen.findByRole("button", { name: /Editar categoria: Supermercado/ });
+    expect(item).toHaveTextContent("🍎");
+
+    await user.click(item);
+    dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Arquivar categoria" }));
+    await waitFor(() => expect(screen.queryByRole("button", { name: /Supermercado/ })).not.toBeInTheDocument());
+  });
+
+  it("explains duplicate names within the same kind, but allows the same name in the other kind", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, catSeed(), "/categories");
+    await user.click(await screen.findByRole("button", { name: "Nova categoria" }));
+    let dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByLabelText("Nome"), "mercado");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    expect(await within(dialog).findByText("Já existe uma categoria ativa com esse nome.")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Fechar" }));
+
+    await user.click(screen.getByRole("tab", { name: "Receitas" }));
+    await user.click(screen.getByRole("button", { name: "Nova categoria" }));
+    dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByLabelText("Nome"), "Mercado");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    expect(await screen.findByRole("button", { name: /Editar categoria: Mercado/ })).toBeInTheDocument();
+  });
+
+  it("adds the default categories once, keeping the ones that exist", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, catSeed(), "/categories");
+    await user.click(await screen.findByRole("button", { name: "Adicionar categorias padrão" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("12 categorias adicionadas.");
+    expect(screen.getByRole("button", { name: /Editar categoria: Moradia/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Editar categoria: Comida fora/ })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /Editar categoria: Mercado/ })).toHaveLength(1);
+    await user.click(screen.getByRole("button", { name: "Adicionar categorias padrão" }));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Todas as categorias padrão já existem."));
+    await user.click(screen.getByRole("tab", { name: "Receitas" }));
+    expect(screen.getByRole("button", { name: /Editar categoria: Projetos/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Editar categoria: Outras receitas/ })).toBeInTheDocument();
+  });
+
+  it("is reachable from the budget screen", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, catSeed(), "/budget");
+    await user.click(await screen.findByRole("link", { name: "Gerenciar categorias" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Categorias" })).toBeInTheDocument();
   });
 });
 

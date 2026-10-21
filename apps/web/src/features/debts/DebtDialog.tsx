@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { css } from "../../../styled-system/css";
 import { useRepository } from "../../data/RepositoryContext";
 import { Modal } from "../../shared/Modal";
+import { categoryLabel } from "../categories/CategoryIcon";
 import { errorText, field, label, primaryButton } from "../../shared/ui";
 import type { useDebtsViewModel } from "./useDebtsViewModel";
 
@@ -54,7 +55,7 @@ export function DebtDialog({ open, onClose, vm }: Props) {
             <label htmlFor="debt-category" className={label}>{t("debts.category")}</label>
             <select id="debt-category" className={field} value={categoryId ?? ""} onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : null)}>
               <option value="">{t("debts.noCategory")}</option>
-              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {categories.filter((c) => c.kind === "expense").map((c) => <option key={c.id} value={c.id}>{categoryLabel(c)}</option>)}
             </select>
           </div>
         )}

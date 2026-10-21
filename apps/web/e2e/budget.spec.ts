@@ -9,10 +9,14 @@ test("sets a category budget and sees it consumed by an expense", async ({ page 
   await expect(page.getByText("Conta Budget")).toBeVisible();
 
   await page.getByRole("link", { name: "Orçamento" }).click();
+  await page.getByRole("link", { name: "Gerenciar categorias" }).click();
   await page.getByRole("button", { name: "Nova categoria" }).click();
   dialog = page.getByRole("dialog");
   await dialog.getByLabel("Nome").fill("Lazer");
+  await dialog.getByRole("radio", { name: "🎬" }).click();
   await dialog.getByRole("button", { name: "Salvar" }).click();
+  await expect(page.getByRole("button", { name: /Editar categoria: Lazer/ })).toContainText("🎬");
+  await page.getByRole("link", { name: /Voltar/ }).click();
 
   await page.getByRole("button", { name: /Lazer/ }).click();
   dialog = page.getByRole("dialog");
@@ -22,7 +26,7 @@ test("sets a category budget and sees it consumed by an expense", async ({ page 
   await page.getByRole("button", { name: "Novo lançamento" }).click();
   dialog = page.getByRole("dialog");
   await dialog.getByLabel("Valor").fill("200,00");
-  await dialog.getByLabel("Categoria").selectOption({ label: "Lazer" });
+  await dialog.getByLabel("Categoria").selectOption({ label: "🎬 Lazer" });
   await dialog.getByRole("button", { name: "Salvar" }).click();
 
   await expect(page.getByRole("progressbar", { name: "Lazer" })).toHaveAttribute("aria-valuenow", "25");

@@ -4,7 +4,8 @@ import { useTranslation } from "react-i18next";
 import { css } from "../../../styled-system/css";
 import type { BudgetCategoryDto } from "../../data/types";
 import { Modal } from "../../shared/Modal";
-import { dangerButton, errorText, field, label, primaryButton } from "../../shared/ui";
+import { categoryLabel } from "../categories/CategoryIcon";
+import { errorText, field, label, primaryButton } from "../../shared/ui";
 import { useLocale } from "../../shared/useLocale";
 import type { useBudgetViewModel } from "./useBudgetViewModel";
 
@@ -30,7 +31,7 @@ export function BudgetDialog({ category, onClose, vm }: Props) {
   }
 
   return (
-    <Modal open onClose={onClose} title={`${t("budget.setBudget")} · ${category.name}`}>
+    <Modal open onClose={onClose} title={`${t("budget.setBudget")} · ${categoryLabel(category)}`}>
       <form onSubmit={onSubmit} className={css({ display: "grid", gap: "3" })}>
         <div>
           <label htmlFor="budget-amount" className={label}>{t("budget.amount")}</label>
@@ -39,16 +40,6 @@ export function BudgetDialog({ category, onClose, vm }: Props) {
         </div>
         {error && <p role="alert" className={errorText}>{t(`errors.${error}`, { defaultValue: t("errors.unknown") })}</p>}
         <button type="submit" className={primaryButton}>{t("common.save")}</button>
-        <button
-          type="button"
-          className={dangerButton}
-          onClick={async () => {
-            await vm.archiveCategory(category.categoryId);
-            onClose();
-          }}
-        >
-          {t("budget.archive")}
-        </button>
       </form>
     </Modal>
   );

@@ -8,6 +8,7 @@ import { PersonPicker } from "./features/people/PersonPicker";
 import { ThemeToggle } from "./features/theme/ThemeToggle";
 import { TransactionDialog } from "./features/transactions/TransactionDialog";
 import { BudgetPage } from "./pages/BudgetPage";
+import { CategoriesPage } from "./pages/CategoriesPage";
 import { CardDetailPage } from "./pages/CardDetailPage";
 import { CardsPage } from "./pages/CardsPage";
 import { DebtDetailPage } from "./pages/DebtDetailPage";
@@ -80,6 +81,7 @@ export function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/transactions" element={<TransactionsPage />} />
           <Route path="/budget" element={<BudgetPage />} />
+          <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/recurring" element={<RecurringPage />} />
           <Route path="/installments" element={<InstallmentsPage />} />
           <Route path="/installments/:id" element={<PlanDetailPage />} />

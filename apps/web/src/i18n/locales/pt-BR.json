@@ -155,7 +155,10 @@
     "recurring_single_source": "Escolha só uma conta ou um cartão.",
     "recurring_income_needs_account": "Receita recorrente precisa ir para uma conta.",
     "recurring_and_installments": "Escolha parcelar ou repetir, não os dois.",
-    "backup_failed": "Não foi possível criar o backup."
+    "backup_failed": "Não foi possível criar o backup.",
+    "invalid_icon": "Ícone inválido.",
+    "budget_only_for_expense": "Só categorias de despesa têm orçamento.",
+    "invalid_kind": "Tipo de categoria inválido."
   },
   "budget": {
     "total": "Orçado",
@@ -169,15 +172,7 @@
     "amountHint": "Vale a partir deste mês e não altera meses anteriores. Deixe vazio para remover.",
     "uncategorized": "Sem categoria",
     "committed": "Previsto",
-    "empty": "Nenhuma categoria ainda. Crie a primeira.",
-    "newCategory": "Nova categoria",
-    "categoryName": "Nome",
-    "categoryKind": "Tipo",
-    "archive": "Arquivar categoria",
-    "kinds": {
-      "expense": "Só despesas",
-      "both": "Despesas e receitas"
-    },
+    "empty": "Nenhuma categoria de despesa ainda. Cadastre em Categorias.",
     "status": {
       "none": "Sem orçamento",
       "ok": "Dentro do orçamento",
@@ -437,5 +432,44 @@
     "message": "Ocorreu um erro inesperado. Seus dados não foram afetados.",
     "reload": "Recarregar",
     "home": "Ir para o início"
+  },
+  "categories": {
+    "title": "Categorias",
+    "kindTabs": "Tipo de categoria",
+    "expenses": "Despesas",
+    "income": "Receitas",
+    "new": "Nova categoria",
+    "name": "Nome",
+    "icon": "Ícone",
+    "noIcon": "Sem ícone",
+    "edit": "Editar categoria",
+    "archive": "Arquivar categoria",
+    "defaults": "Adicionar categorias padrão",
+    "defaultsAdded": "{{count}} categorias adicionadas.",
+    "defaultsAddedOne": "1 categoria adicionada.",
+    "defaultsNone": "Todas as categorias padrão já existem.",
+    "emptyExpense": "Nenhuma categoria de despesa.",
+    "emptyIncome": "Nenhuma categoria de receita.",
+    "manage": "Gerenciar categorias",
+    "kindFixed": "O tipo não muda depois de criada.",
+    "back": "Voltar",
+    "kindExpense": "Categoria de despesa",
+    "kindIncome": "Categoria de receita",
+    "iconGroups": {
+      "money": "Dinheiro",
+      "home": "Casa",
+      "bills": "Contas e assinaturas",
+      "vehicle": "Carro",
+      "transport": "Transporte",
+      "food": "Comida",
+      "care": "Cuidados pessoais",
+      "education": "Educação",
+      "clothing": "Roupas",
+      "health": "Saúde",
+      "leisure": "Lazer",
+      "family": "Família e pets",
+      "debts": "Dívidas",
+      "misc": "Outros"
+    }
   }
 }

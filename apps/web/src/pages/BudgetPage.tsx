@@ -4,17 +4,17 @@ import { css } from "../../styled-system/css";
 import type { BudgetCategoryDto } from "../data/types";
 import { BudgetBar } from "../features/budget/BudgetBar";
 import { BudgetDialog } from "../features/budget/BudgetDialog";
-import { CategoryDialog } from "../features/budget/CategoryDialog";
+import { CategoryIcon } from "../features/categories/CategoryIcon";
 import { useBudgetViewModel } from "../features/budget/useBudgetViewModel";
 import { MoneyText } from "../shared/MoneyText";
 import { MonthNavigator } from "../shared/MonthNavigator";
-import { card, primaryButton } from "../shared/ui";
+import { Link } from "react-router";
+import { card } from "../shared/ui";
 
 export function BudgetPage() {
   const { t } = useTranslation();
   const vm = useBudgetViewModel();
   const [editing, setEditing] = useState<BudgetCategoryDto | null>(null);
-  const [creating, setCreating] = useState(false);
   const report = vm.report;
 
   return (
@@ -43,7 +43,7 @@ export function BudgetPage() {
       )}
 
       <div className={css({ display: "flex", justifyContent: "flex-end" })}>
-        <button type="button" className={primaryButton} onClick={() => setCreating(true)}>{t("budget.newCategory")}</button>
+        <Link to="/categories" className={css({ color: "primary", fontSize: "sm" })}>{t("categories.manage")}</Link>
       </div>
 
       {vm.isLoading ? (
@@ -61,7 +61,10 @@ export function BudgetPage() {
                 className={`${card} ${css({ width: "100%", display: "grid", gap: "2", textAlign: "left", cursor: "pointer" })}`}
               >
                 <span className={css({ display: "flex", justifyContent: "space-between" })}>
-                  <strong>{c.name}</strong>
+                  <span className={css({ display: "flex", alignItems: "center", gap: "2" })}>
+                    <CategoryIcon icon={c.icon} />
+                    <strong>{c.name}</strong>
+                  </span>
                   {c.budgetCents > 0 ? (
                     <span className={css({ fontSize: "sm", color: "muted" })}>
                       <MoneyText cents={c.spentCents} /> / <MoneyText cents={c.budgetCents} />
@@ -102,7 +105,6 @@ export function BudgetPage() {
       )}
 
       {editing && <BudgetDialog category={editing} vm={vm} onClose={() => setEditing(null)} />}
-      <CategoryDialog open={creating} onClose={() => setCreating(false)} vm={vm} />
     </div>
   );
 }
