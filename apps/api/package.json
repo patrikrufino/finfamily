@@ -8,7 +8,8 @@
     "test": "vitest run",
     "typecheck": "tsc -p .",
     "db:generate": "drizzle-kit generate",
-    "backup": "tsx src/backup.ts"
+    "backup": "tsx src/backup.ts",
+    "restore": "tsx src/restore.ts"
   },
   "dependencies": {
     "@finfamily/domain": "workspace:*",
