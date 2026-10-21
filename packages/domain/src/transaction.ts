@@ -21,6 +21,8 @@ export interface TransactionInput {
   /** Statement (`YYYY-MM`) a payment or fee refers to. */
   statementMonth?: string | null;
   feeKind?: "interest" | "fine" | null;
+  /** Balance adjustment: keeps the account balance right but is not spending or earning. */
+  adjustment?: boolean;
   description: string;
   status: TransactionStatus;
   personId: number;
