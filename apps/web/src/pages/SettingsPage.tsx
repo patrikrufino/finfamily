@@ -39,7 +39,18 @@ export function SettingsPage() {
         )}
         {vm.installState === "installed" && <p className={hint}>{t("settings.installed")}</p>}
         {vm.installState === "ios" && <p className={hint}>{t("settings.installIos")}</p>}
+        {vm.installState === "insecure" && <p role="alert" className={css({ color: "red.500", fontSize: "sm" })}>{t("settings.installInsecure", { origin: vm.pwa.origin })}</p>}
         {vm.installState === "unavailable" && <p className={hint}>{t("settings.installUnavailable")}</p>}
+        <dl aria-label={t("settings.diagnostics")} className={css({ display: "grid", gridTemplateColumns: "1fr auto", gap: "1", fontSize: "sm", marginTop: "2" })}>
+          <dt className={css({ color: "muted" })}>{t("settings.addressLabel")}</dt>
+          <dd>{vm.pwa.origin}</dd>
+          <dt className={css({ color: "muted" })}>{t("settings.secureLabel")}</dt>
+          <dd data-testid="diag-secure" className={css({ fontWeight: "bold", color: vm.pwa.secure ? "primary" : "red.500" })}>{vm.pwa.secure ? t("settings.yes") : t("settings.no")}</dd>
+          <dt className={css({ color: "muted" })}>{t("settings.swLabel")}</dt>
+          <dd data-testid="diag-sw">{t(`settings.swState.${vm.pwa.serviceWorker}`)}</dd>
+          <dt className={css({ color: "muted" })}>{t("settings.displayLabel")}</dt>
+          <dd>{vm.pwa.standalone ? t("settings.displayStandalone") : t("settings.displayBrowser")}</dd>
+        </dl>
       </section>
 
       <section aria-labelledby="set-backups" className={`${card} ${css({ display: "grid", gap: "2" })}`}>

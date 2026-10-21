@@ -12,6 +12,12 @@ const promptEvent = (outcome: "accepted" | "dismissed" = "accepted") => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("useInstallPrompt", () => {
+  it("explains that plain HTTP is the problem when the page is not a secure context", () => {
+    vi.stubGlobal("isSecureContext", false);
+    const { result } = renderHook(() => useInstallPrompt());
+    expect(result.current.state).toBe("insecure");
+  });
+
   it("is unavailable by default", () => {
     const { result } = renderHook(() => useInstallPrompt());
     expect(result.current.state).toBe("unavailable");
@@ -41,6 +47,13 @@ describe("useInstallPrompt", () => {
     let outcome: string | undefined = "x";
     await act(async () => { outcome = await result.current.install(); });
     expect(outcome).toBeUndefined();
+  });
+
+  it("never calls it insecure when the browser did offer installation", () => {
+    vi.stubGlobal("isSecureContext", true);
+    const { result } = renderHook(() => useInstallPrompt());
+    act(() => { window.dispatchEvent(promptEvent()); });
+    expect(result.current.state).toBe("available");
   });
 
   it("is installed once the app was installed", () => {

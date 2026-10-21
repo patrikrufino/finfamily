@@ -21,6 +21,13 @@ const server = serve(
   (info) => {
     console.log(`FinFamily listening on port ${info.port} (db: ${config.databasePath})`);
     if (!config.webDist) console.log("Web app not found: run `pnpm build` to serve it from here, or use `pnpm dev`.");
+    if (!tls) {
+      console.log(
+        "\nNote: over plain HTTP a phone cannot install the app (PWA) or use offline mode; it only works as a website.\n" +
+          `For that, open it over HTTPS, e.g. with Tailscale: tailscale serve --bg --https=443 http://localhost:${info.port}\n` +
+          "(see README, \"Instalar no celular\"). On this computer, http://localhost already counts as secure.\n",
+      );
+    }
     console.log(`Open on this computer: ${protocol}://localhost:${info.port}`);
     for (const addresses of Object.values(networkInterfaces())) {
       for (const a of addresses ?? []) {

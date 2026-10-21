@@ -148,6 +148,7 @@ describe("settings", () => {
   it("offers installation when the browser allows it", async () => {
     const user = userEvent.setup();
     renderWithProviders(<App />, createFakeRepository(), "/settings");
+    vi.stubGlobal("isSecureContext", true);
     expect(await screen.findByText(/A instalação não está disponível agora/)).toBeInTheDocument();
     const event = new Event("beforeinstallprompt", { cancelable: true }) as Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
     event.prompt = vi.fn(async () => undefined);
@@ -158,7 +159,29 @@ describe("settings", () => {
     await waitFor(() => expect(screen.queryByRole("button", { name: "Instalar" })).not.toBeInTheDocument());
   });
 
+  it("says plainly that HTTP is why the app cannot be installed, and shows the diagnostics", async () => {
+    vi.stubGlobal("isSecureContext", false);
+    const nav = { ...navigator } as Record<string, unknown>;
+    delete nav.serviceWorker;
+    vi.stubGlobal("navigator", nav);
+    renderWithProviders(<App />, createFakeRepository(), "/settings");
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Você abriu o app por HTTP/);
+    expect(screen.getByRole("alert")).toHaveTextContent(/HTTPS/);
+    expect(screen.getByTestId("diag-secure")).toHaveTextContent("Não");
+    expect(screen.getByTestId("diag-sw")).toHaveTextContent("Indisponível neste endereço");
+  });
+
+  it("shows a secure context with the service worker active in the diagnostics", async () => {
+    vi.stubGlobal("isSecureContext", true);
+    vi.stubGlobal("navigator", { ...navigator, serviceWorker: { getRegistration: vi.fn(async () => ({ active: {} })) } });
+    renderWithProviders(<App />, createFakeRepository(), "/settings");
+    expect(await screen.findByTestId("diag-secure")).toHaveTextContent("Sim");
+    await waitFor(() => expect(screen.getByTestId("diag-sw")).toHaveTextContent("Ativo"));
+    expect(screen.queryByText(/Você abriu o app por HTTP/)).not.toBeInTheDocument();
+  });
+
   it("shows the manual steps on iOS and the version", async () => {
+    vi.stubGlobal("isSecureContext", true);
     vi.stubGlobal("navigator", { ...navigator, userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)" });
     renderWithProviders(<App />, createFakeRepository(), "/settings");
     expect(await screen.findByText(/Adicionar à Tela de Início/)).toBeInTheDocument();

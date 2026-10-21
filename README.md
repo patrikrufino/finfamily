@@ -42,6 +42,10 @@ mas o botão "Instalar" não aparece. Escolha uma das opções de HTTPS abaixo e
 
 O ícone ganha atalhos (pressione e segure): **Novo lançamento**, **Orçamento** e **Cartões**.
 
+> **"Não aparece como PWA / não oferece instalar"** quase sempre é porque o endereço aberto no celular começa com `http://` e é um IP
+> (`http://192.168…`). Nesse caso o Chrome nem permite service worker nem instalação (`not-from-secure-origin`). Em *Ajustes → Instalar o app*
+> o próprio app mostra isso e um diagnóstico (endereço, conexão segura, service worker). Em `http://localhost` (no próprio computador) já funciona.
+
 ### Opções de HTTPS
 
 1. **Tailscale (recomendado, também funciona fora de casa).** Instale o Tailscale no computador e nos celulares e rode
@@ -51,6 +55,13 @@ O ícone ganha atalhos (pressione e segure): **Novo lançamento**, **Orçamento*
    `TLS_CERT=./192.168.0.10+1.pem TLS_KEY=./192.168.0.10+1-key.pem pnpm start`. É preciso instalar a CA do mkcert no celular
    (no iPhone: instalar o perfil e ativar a confiança total em *Ajustes → Geral → Sobre → Configurações de certificado*).
 3. **Caddy/nginx** na frente do app, com o certificado que você preferir.
+4. **Só para testar em casa no Android (sem HTTPS):** no Chrome do celular abra `chrome://flags/#unsafely-treat-insecure-origin-as-secure`,
+   ative a opção, escreva `http://IP-DO-COMPUTADOR:3333` na caixa, toque em *Relaunch* e abra o app de novo. Não existe equivalente no iPhone
+   (lá, *Adicionar à Tela de Início* funciona mesmo por HTTP, mas sem o modo offline).
+
+Passo a passo com Tailscale: (1) crie a conta e instale o Tailscale no computador e nos celulares; (2) no computador rode
+`pnpm build && pnpm start` e, em outro terminal, `tailscale serve --bg --https=443 http://localhost:3333`; (3) abra no celular o endereço
+`https://<nome-do-computador>.<sua-rede>.ts.net` que o comando mostra; (4) *Ajustes → Instalar o app*.
 
 ## Backups
 
