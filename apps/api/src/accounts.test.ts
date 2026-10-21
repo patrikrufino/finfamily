@@ -56,3 +56,58 @@ describe("accounts API", () => {
     expect((await app.request("/api/accounts/999", json("PATCH", { name: "x" }))).status).toBe(404);
   });
 });
+
+describe("initial balance and adjustments", () => {
+  const call = async (method: string, path: string, body?: unknown) => {
+    const res = await app.request(path, json(method, body));
+    const text = await res.text();
+    return { status: res.status, body: text ? JSON.parse(text) : null };
+  };
+  let id: number;
+  beforeEach(async () => {
+    id = (await call("POST", "/api/accounts", { name: "Main", type: "checking", initialBalanceCents: 100000 })).body.id;
+  });
+  const adjust = (over: Record<string, unknown> = {}) =>
+    call("POST", `/api/accounts/${id}/adjust`, { targetBalanceCents: 92000, personId: 1, date: "2026-10-10", ...over });
+  const account = async () => (await call("GET", "/api/accounts")).body.find((a: any) => a.id === id);
+
+  it("edits the initial balance, which changes the balance directly", async () => {
+    const res = await call("PATCH", `/api/accounts/${id}`, { initialBalanceCents: 150000 });
+    expect(res.body).toMatchObject({ initialBalanceCents: 150000, balanceCents: 150000 });
+    expect((await call("GET", "/api/transactions?month=2026-10")).body).toHaveLength(0);
+  });
+
+  it("adjusts down with an expense adjustment", async () => {
+    const res = await adjust();
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({ kind: "expense", amountCents: 8000, adjustment: true, description: "Ajuste de saldo", status: "settled" });
+    expect((await account()).balanceCents).toBe(92000);
+  });
+
+  it("adjusts up with an income adjustment", async () => {
+    const res = await adjust({ targetBalanceCents: 105000 });
+    expect(res.body).toMatchObject({ kind: "income", amountCents: 5000, adjustment: true });
+    expect((await account()).balanceCents).toBe(105000);
+  });
+
+  it("compares against the settled balance only", async () => {
+    await call("POST", "/api/transactions", {
+      kind: "expense", amountCents: 30000, date: "2099-01-01", accountId: id, status: "scheduled", personId: 1,
+    });
+    const res = await adjust({ targetBalanceCents: 100000 });
+    expect(res.status).toBe(422);
+    expect(res.body.errors).toContain("no_adjustment_needed");
+  });
+
+  it("rejects nothing-to-adjust, unknown accounts and people, and bad input", async () => {
+    expect((await adjust({ targetBalanceCents: 100000 })).body.errors).toContain("no_adjustment_needed");
+    expect((await call("POST", "/api/accounts/999/adjust", { targetBalanceCents: 1, personId: 1, date: "2026-10-10" })).status).toBe(404);
+    expect((await adjust({ personId: 999 })).status).toBe(404);
+    expect((await adjust({ targetBalanceCents: 1.5 })).status).toBe(422);
+    expect((await adjust({ date: "nope" })).status).toBe(422);
+  });
+
+  it("lets the description be customized", async () => {
+    expect((await adjust({ description: "Bank fee found" })).body.description).toBe("Bank fee found");
+  });
+});

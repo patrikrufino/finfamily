@@ -93,4 +93,9 @@ describe("budget API", () => {
     expect(row(b, old)).toBeDefined();
     expect(row(b, unused)).toBeUndefined();
   });
+
+  it("does not count balance adjustments as spending", async () => {
+    await app.request(`/api/accounts/${accountId}/adjust`, json("POST", { targetBalanceCents: -5000, personId: 1, date: "2026-10-10" }));
+    expect((await budget()).uncategorized).toEqual({ spentCents: 0, committedCents: 0 });
+  });
 });

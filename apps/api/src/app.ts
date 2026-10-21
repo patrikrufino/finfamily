@@ -19,7 +19,7 @@ export function createApp(db: AppDatabase, { today = localToday }: AppOptions = 
 
   app.get("/api/health", (c) => c.json({ status: "ok" }));
   app.get("/api/people", (c) => c.json(db.select().from(people).orderBy(people.id).all()));
-  app.route("/api/accounts", accountsRoutes(db));
+  app.route("/api/accounts", accountsRoutes(db, today));
   app.route("/api/categories", categoriesRoutes(db));
   app.route("/api/cards", cardsRoutes(db, today));
   app.route("/", budgetRoutes(db));

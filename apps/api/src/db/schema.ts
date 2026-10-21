@@ -61,6 +61,7 @@ export const transactions = sqliteTable("transactions", {
   cardId: integer("card_id").references(() => cards.id),
   statementMonth: text("statement_month"),
   feeKind: text("fee_kind", { enum: ["interest", "fine"] }),
+  adjustment: integer("adjustment", { mode: "boolean" }).notNull().default(false),
   description: text("description").notNull().default(""),
   status: text("status", { enum: ["settled", "scheduled"] }).notNull().default("settled"),
   personId: integer("person_id").notNull().references(() => people.id),
