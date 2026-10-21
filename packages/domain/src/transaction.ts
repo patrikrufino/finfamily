@@ -28,6 +28,8 @@ export interface TransactionInput {
   installmentNumber?: number | null;
   /** Debt this expense pays off (a payment/baixa). */
   debtId?: number | null;
+  /** Recurring rule that posted this transaction. */
+  recurringId?: number | null;
   description: string;
   status: TransactionStatus;
   personId: number;
