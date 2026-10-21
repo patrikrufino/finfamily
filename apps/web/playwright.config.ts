@@ -6,23 +6,18 @@ export default defineConfig({
   workers: 1,
   fullyParallel: false,
   use: {
-    baseURL: "http://localhost:4173",
+    baseURL: "http://localhost:3333",
     ...devices["Pixel 7"],
     locale: "pt-BR",
     launchOptions: process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
   },
-  webServer: [
-    {
-      command: "rm -f /tmp/finfamily-e2e.db* && DATABASE_PATH=/tmp/finfamily-e2e.db PORT=3333 pnpm --filter @finfamily/api start",
-      url: "http://localhost:3333/api/health",
-      reuseExistingServer: false,
-      timeout: 60_000,
-    },
-    {
-      command: "pnpm build && pnpm preview --port 4173 --strictPort",
-      url: "http://localhost:4173",
-      reuseExistingServer: true,
-      timeout: 120_000,
-    },
-  ],
+  // Same as at home: one process serves the API and the built web app on one port.
+  webServer: {
+    command:
+      "pnpm build && rm -rf /tmp/finfamily-e2e.db* /tmp/finfamily-e2e-backups && " +
+      "DATABASE_PATH=/tmp/finfamily-e2e.db BACKUP_DIR=/tmp/finfamily-e2e-backups PORT=3333 WEB_DIST=$PWD/dist pnpm --filter @finfamily/api start",
+    url: "http://localhost:3333/api/health",
+    reuseExistingServer: false,
+    timeout: 120_000,
+  },
 });

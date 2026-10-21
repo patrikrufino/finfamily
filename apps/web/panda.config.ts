@@ -7,6 +7,13 @@ export default defineConfig({
   exclude: [],
   outdir: "styled-system",
   jsxFramework: "react",
+  globalCss: {
+    // Keyboard focus must always be visible.
+    "*:focus-visible": { outline: "2px solid", outlineColor: "primary", outlineOffset: "2px" },
+    "@media (prefers-reduced-motion: reduce)": {
+      "*, *::before, *::after": { animationDuration: "0.01ms !important", transitionDuration: "0.01ms !important", scrollBehavior: "auto !important" },
+    },
+  },
   conditions: {
     extend: {
       dark: {

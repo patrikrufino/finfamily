@@ -8,7 +8,8 @@
     "preview": "vite preview --host",
     "test": "panda codegen --silent && vitest run",
     "test:e2e": "playwright test",
-    "typecheck": "panda codegen --silent && tsc -p ."
+    "typecheck": "panda codegen --silent && tsc -p .",
+    "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "@ark-ui/react": "^5.39.3",
@@ -37,5 +38,6 @@
     "vite": "^8.3.4",
     "vite-plugin-pwa": "^2.0.0",
     "vitest": "^5.0.5"
-  }
+  },
+  "version": "0.7.0"
 }

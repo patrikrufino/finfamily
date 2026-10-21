@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- launchd agent. Copy to ~/Library/LaunchAgents/com.finfamily.plist, adjust the paths, then:
+       launchctl load ~/Library/LaunchAgents/com.finfamily.plist -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key><string>com.finfamily</string>
+    <key>WorkingDirectory</key><string>/Users/YOU/finfamily</string>
+    <key>ProgramArguments</key>
+    <array>
+      <string>/bin/zsh</string>
+      <string>-lc</string>
+      <string>pnpm start</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>DATABASE_PATH</key><string>/Users/YOU/finfamily-data/finfamily.db</string>
+      <key>PORT</key><string>3333</string>
+    </dict>
+    <key>RunAtLoad</key><true/>
+    <key>KeepAlive</key><true/>
+    <key>StandardOutPath</key><string>/Users/YOU/finfamily-data/finfamily.log</string>
+    <key>StandardErrorPath</key><string>/Users/YOU/finfamily-data/finfamily.err.log</string>
+  </dict>
+</plist>

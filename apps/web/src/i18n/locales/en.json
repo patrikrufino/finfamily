@@ -8,7 +8,8 @@
     "budget": "Budget",
     "cards": "Cards",
     "debts": "Debts",
-    "label": "Main navigation"
+    "label": "Main navigation",
+    "settings": "Settings"
   },
   "pages": {
     "home": "Overview",
@@ -153,7 +154,8 @@
     "recurring_source_required": "Choose an account or a card.",
     "recurring_single_source": "Choose only one account or card.",
     "recurring_income_needs_account": "Recurring income must go to an account.",
-    "recurring_and_installments": "Choose installments or repeating, not both."
+    "recurring_and_installments": "Choose installments or repeating, not both.",
+    "backup_failed": "Could not create the backup."
   },
   "budget": {
     "total": "Budgeted",
@@ -380,5 +382,45 @@
     "expenseLabel": "Expense",
     "active": "Active",
     "inactive": "Paused and ended"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "install": "Install the app",
+    "installAvailable": "Install FinFamily on your home screen to open it like an app.",
+    "installButton": "Install",
+    "installed": "The app is already installed on this device.",
+    "installIos": "On iPhone or iPad: tap Share, then “Add to Home Screen”.",
+    "installUnavailable": "Installation is not available right now. It requires opening the app over HTTPS (or localhost) in a supported browser.",
+    "backups": "Backups",
+    "backupsHint": "Copies of the database made on the computer where the app runs.",
+    "backupNow": "Back up now",
+    "backingUp": "Backing up…",
+    "lastBackup": "Last backup: {{date}}",
+    "noBackups": "No backups yet.",
+    "schedule": "Automatic every {{hours}} h; keeps the {{keep}} newest.",
+    "scheduleOff": "Automatic backup is off; keeps the {{keep}} newest.",
+    "backupsDisabled": "Backups are not enabled on this server.",
+    "backupDone": "Backup created.",
+    "about": "About",
+    "version": "Version {{version}}",
+    "languages": {
+      "pt-BR": "Português (Brasil)",
+      "en": "English"
+    }
+  },
+  "offline": {
+    "banner": "Cannot reach the server. Check that the computer at home is on and that you are on the same network.",
+    "retry": "Try again"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "back": "Back to home"
+  },
+  "crash": {
+    "title": "Something went wrong",
+    "message": "An unexpected error happened. Your data was not affected.",
+    "reload": "Reload",
+    "home": "Go to home"
   }
 }
