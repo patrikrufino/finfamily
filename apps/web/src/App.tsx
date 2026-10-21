@@ -6,6 +6,8 @@ import { PersonPicker } from "./features/people/PersonPicker";
 import { ThemeToggle } from "./features/theme/ThemeToggle";
 import { TransactionDialog } from "./features/transactions/TransactionDialog";
 import { BudgetPage } from "./pages/BudgetPage";
+import { CardDetailPage } from "./pages/CardDetailPage";
+import { CardsPage } from "./pages/CardsPage";
 import { HomePage } from "./pages/HomePage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { TransactionsPage } from "./pages/TransactionsPage";
@@ -52,7 +54,9 @@ export function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/transactions" element={<TransactionsPage />} />
           <Route path="/budget" element={<BudgetPage />} />
-          {NAV_ITEMS.filter(({ key }) => key !== "home" && key !== "transactions" && key !== "budget").map(({ path, key }) => (
+          <Route path="/cards" element={<CardsPage />} />
+          <Route path="/cards/:id" element={<CardDetailPage />} />
+          {NAV_ITEMS.filter(({ key }) => key !== "home" && key !== "transactions" && key !== "budget" && key !== "cards").map(({ path, key }) => (
             <Route key={key} path={path} element={<PlaceholderPage titleKey={`pages.${key}`} />} />
           ))}
         </Routes>

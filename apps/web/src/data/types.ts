@@ -1,4 +1,11 @@
-import type { AccountType, BudgetStatus, CategoryKind, TransactionKind, TransactionStatus } from "@finfamily/domain";
+import type {
+  AccountType,
+  BudgetStatus,
+  CategoryKind,
+  StatementStatus,
+  TransactionKind,
+  TransactionStatus,
+} from "@finfamily/domain";
 
 export interface PersonDto {
   id: number;
@@ -20,9 +27,13 @@ export interface TransactionDto {
   kind: TransactionKind;
   amountCents: number;
   date: string;
-  accountId: number;
+  /** Null for card purchases. */
+  accountId: number | null;
   toAccountId: number | null;
   categoryId: number | null;
+  cardId: number | null;
+  statementMonth: string | null;
+  feeKind: "interest" | "fine" | null;
   description: string;
   status: TransactionStatus;
   personId: number;
@@ -56,9 +67,64 @@ export interface BudgetReportDto {
   totals: { budgetCents: number; spentCents: number; remainingCents: number };
 }
 
+export interface StatementDto {
+  cardId: number;
+  month: string;
+  start: string;
+  end: string;
+  dueDate: string;
+  totalCents: number;
+  paidCents: number;
+  feesCents: number;
+  remainingCents: number;
+  status: StatementStatus;
+  closingDay: number;
+  dueDay: number;
+  purchases: TransactionDto[];
+  payments: TransactionDto[];
+  fees: TransactionDto[];
+}
+
+export interface CardDto {
+  id: number;
+  name: string;
+  archived: boolean;
+  limitCents: number;
+  usedCents: number;
+  availableCents: number;
+  closingDay: number;
+  dueDay: number;
+  openStatementMonth: string;
+  openStatement: Omit<StatementDto, "purchases" | "payments" | "fees" | "closingDay" | "dueDay">;
+}
+
+export interface NewCard {
+  name: string;
+  limitCents: number;
+  closingDay: number;
+  dueDay: number;
+}
+
+export interface CycleRuleInput {
+  fromMonth: string;
+  closingDay: number;
+  dueDay: number;
+}
+
+export interface StatementPaymentInput {
+  accountId: number;
+  amountCents: number;
+  interestCents: number;
+  fineCents: number;
+  date: string;
+  personId: number;
+}
+
 export type NewCategory = Pick<CategoryDto, "name" | "kind">;
 
-export type NewTransaction = Omit<TransactionDto, "id">;
+type CardFields = "cardId" | "statementMonth" | "feeKind";
+/** Card-related fields default to null when omitted. */
+export type NewTransaction = Omit<TransactionDto, "id" | CardFields> & Partial<Pick<TransactionDto, CardFields>>;
 export type NewAccount = Pick<AccountDto, "name" | "type" | "initialBalanceCents">;
 
 export interface TransactionFilter {
@@ -66,6 +132,7 @@ export interface TransactionFilter {
   accountId?: number;
   personId?: number;
   categoryId?: number;
+  cardId?: number;
 }
 
 export class ApiError extends Error {
@@ -92,4 +159,11 @@ export interface FinanceRepository {
   updateCategory(id: number, patch: Partial<Pick<CategoryDto, "name" | "kind" | "archived">>): Promise<CategoryDto>;
   setBudget(categoryId: number, month: string, amountCents: number): Promise<void>;
   getBudget(month: string): Promise<BudgetReportDto>;
+  listCards(): Promise<CardDto[]>;
+  createCard(input: NewCard): Promise<CardDto>;
+  updateCard(id: number, patch: Partial<Pick<CardDto, "name" | "limitCents" | "archived">>): Promise<CardDto>;
+  setCardRule(cardId: number, rule: CycleRuleInput): Promise<void>;
+  /** Without a month, returns the statement that is currently open. */
+  getStatement(cardId: number, month?: string): Promise<StatementDto>;
+  payStatement(cardId: number, month: string, input: StatementPaymentInput): Promise<StatementDto>;
 }

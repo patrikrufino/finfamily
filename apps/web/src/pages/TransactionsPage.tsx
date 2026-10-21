@@ -18,10 +18,15 @@ export function TransactionsPage() {
   const vm = useTransactionsViewModel();
   const [editing, setEditing] = useState<TransactionDto | null>(null);
   const accounts = useQuery({ queryKey: ["accounts"], queryFn: () => repository.listAccounts() }).data ?? [];
+  const cards = useQuery({ queryKey: ["cards"], queryFn: () => repository.listCards() }).data ?? [];
   const categories = useQuery({ queryKey: ["categories"], queryFn: () => repository.listCategories() }).data ?? [];
   const people = useQuery({ queryKey: ["people"], queryFn: () => repository.listPeople() }).data ?? [];
 
-  const accountName = (id: number) => accounts.find((a) => a.id === id)?.name ?? "";
+  const accountName = (id: number | null) => accounts.find((a) => a.id === id)?.name ?? "";
+  const cardName = (id: number | null) => cards.find((c) => c.id === id)?.name ?? "";
+  /** Payments and fees belong to a statement; they are managed from the card screen, not edited here. */
+  const statementTitle = (tx: TransactionDto) =>
+    tx.feeKind ? `${t(`cards.fee.${tx.feeKind}`)} · ${cardName(tx.cardId)}` : `${t("cards.statementPayment")} · ${cardName(tx.cardId)}`;
   const categoryName = (id: number | null) => categories.find((c) => c.id === id)?.name;
   const personName = (id: number) => people.find((p) => p.id === id)?.name ?? "";
   const formatDate = (iso: string) =>
@@ -61,17 +66,17 @@ export function TransactionsPage() {
         <p className={css({ color: "muted" })}>{t("transactions.empty")}</p>
       ) : (
         <ul className={css({ display: "grid", gap: "2", listStyle: "none" })}>
-          {vm.transactions.map((tx) => (
-            <li key={tx.id}>
-              <button
-                type="button"
-                onClick={() => setEditing(tx)}
-                className={`${card} ${css({ width: "100%", display: "flex", justifyContent: "space-between", textAlign: "left", cursor: "pointer", opacity: tx.status === "scheduled" ? 0.7 : 1 })}`}
-              >
+          {vm.transactions.map((tx) => {
+            const isStatementItem = tx.statementMonth !== null;
+            const title = isStatementItem ? statementTitle(tx) : tx.description || t(`transactions.${tx.kind}`);
+            const source = tx.accountId !== null ? accountName(tx.accountId) : cardName(tx.cardId);
+            const itemClass = `${card} ${css({ width: "100%", display: "flex", justifyContent: "space-between", textAlign: "left", opacity: tx.status === "scheduled" ? 0.7 : 1 })}`;
+            const content = (
+              <>
                 <span>
-                  <span className={css({ display: "block", fontWeight: "bold" })}>{tx.description || t(`transactions.${tx.kind}`)}</span>
+                  <span className={css({ display: "block", fontWeight: "bold" })}>{title}</span>
                   <span className={css({ color: "muted", fontSize: "sm" })}>
-                    {formatDate(tx.date)} · {accountName(tx.accountId)}
+                    {formatDate(tx.date)} · {source}
                     {tx.toAccountId ? ` → ${accountName(tx.toAccountId)}` : ""}{categoryName(tx.categoryId) ? ` · ${categoryName(tx.categoryId)}` : ""} · {personName(tx.personId)}
                     {tx.status === "scheduled" ? ` · ${t("transactions.scheduled")}` : ""}
                   </span>
@@ -80,9 +85,20 @@ export function TransactionsPage() {
                   cents={tx.kind === "expense" ? -tx.amountCents : tx.amountCents}
                   className={css({ fontWeight: "bold", color: tx.kind === "expense" ? "red.500" : tx.kind === "income" ? "primary" : "text" })}
                 />
-              </button>
-            </li>
-          ))}
+              </>
+            );
+            return (
+              <li key={tx.id}>
+                {isStatementItem ? (
+                  <div className={itemClass}>{content}</div>
+                ) : (
+                  <button type="button" onClick={() => setEditing(tx)} className={`${itemClass} ${css({ cursor: "pointer" })}`}>
+                    {content}
+                  </button>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
 

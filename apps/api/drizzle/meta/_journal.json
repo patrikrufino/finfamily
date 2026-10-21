@@ -22,6 +22,13 @@
       "when": 1792540008089,
       "tag": "0002_categories_and_budgets",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1792541056736,
+      "tag": "0003_credit_cards",
+      "breakpoints": true
     }
   ]
 }

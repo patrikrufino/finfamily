@@ -2,6 +2,9 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
+  // The specs share one SQLite database, so they must not run concurrently.
+  workers: 1,
+  fullyParallel: false,
   use: {
     baseURL: "http://localhost:4173",
     ...devices["Pixel 7"],

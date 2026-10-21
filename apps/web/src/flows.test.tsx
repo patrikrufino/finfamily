@@ -133,3 +133,103 @@ describe("budget flow", () => {
     expect(within(dialog).queryByLabelText("Categoria")).not.toBeInTheDocument();
   });
 });
+
+describe("credit card flow", () => {
+  const cardSeed = () =>
+    createFakeRepository({
+      today: "2026-10-20",
+      accounts: [{ name: "Conta Itaú", type: "checking", initialBalanceCents: 500000 }],
+      cards: [{ name: "Visa", limitCents: 500000, closingDay: 25, dueDay: 5 }],
+    });
+
+  it("shows the card with its available limit and charges a purchase to the card, not to the account", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, cardSeed(), "/cards");
+    expect(await screen.findByText("Visa")).toBeInTheDocument();
+    expect(nbsp(screen.getByRole("link", { name: /Visa/ }).textContent!)).toContain("Disponível: R$ 5.000,00");
+
+    await user.click(screen.getByRole("button", { name: "Novo lançamento" }));
+    const dialog = await screen.findByRole("dialog");
+    await within(dialog).findByRole("option", { name: "Visa" });
+    await user.type(within(dialog).getByLabelText("Valor"), "200,00");
+    await user.selectOptions(within(dialog).getByLabelText("Conta ou cartão"), "Visa");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    await waitFor(() => expect(nbsp(screen.getByRole("link", { name: /Visa/ }).textContent!)).toContain("Disponível: R$ 4.800,00"));
+    await user.click(screen.getByRole("link", { name: "Início" }));
+    await waitFor(() => expect(nbsp(screen.getByTestId("total-balance").textContent!)).toBe("R$ 5.000,00"));
+  });
+
+  it("creates a card from the cards screen and rejects an invalid closing day", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, createFakeRepository(), "/cards");
+    await user.click(await screen.findByRole("button", { name: "Novo cartão" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByLabelText("Nome"), "Master");
+    await user.type(within(dialog).getByLabelText("Limite"), "3.000,00");
+    await user.type(within(dialog).getByLabelText("Dia de fechamento"), "40");
+    await user.type(within(dialog).getByLabelText("Dia de vencimento"), "10");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    expect(await within(dialog).findByText("Informe um dia de 1 a 31.")).toBeInTheDocument();
+    await user.clear(within(dialog).getByLabelText("Dia de fechamento"));
+    await user.type(within(dialog).getByLabelText("Dia de fechamento"), "25");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    expect(await screen.findByText("Master")).toBeInTheDocument();
+  });
+
+  it("pays a closed statement with interest and updates the account balance", async () => {
+    const user = userEvent.setup();
+    const repo = cardSeed();
+    await repo.createTransaction({
+      kind: "expense", amountCents: 100000, date: "2026-09-10", accountId: null, cardId: 1, toAccountId: null,
+      categoryId: null, description: "Notebook", status: "settled", personId: 1,
+    });
+    renderWithProviders(<App />, repo, "/cards/1");
+    await user.click(await screen.findByRole("button", { name: "Mês anterior" }));
+    await waitFor(() => expect(screen.getByTestId("month-label")).toHaveTextContent("Setembro de 2026"));
+    expect(screen.getByTestId("statement-status")).toHaveTextContent("Fechada");
+    expect(nbsp(screen.getByTestId("statement-total").textContent!)).toBe("R$ 1.000,00");
+    expect(screen.getByText("Notebook")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Pagar fatura" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByLabelText("Valor pago")).toHaveValue("1.000,00");
+    await user.type(within(dialog).getByLabelText("Juros"), "20,00");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(screen.getByTestId("statement-status")).toHaveTextContent("Paga"));
+    expect(screen.queryByRole("button", { name: "Pagar fatura" })).not.toBeInTheDocument();
+    expect(screen.getByText("Juros e multas")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("link", { name: "Início" }));
+    await waitFor(() => expect(nbsp(screen.getByTestId("total-balance").textContent!)).toBe("R$ 3.980,00"));
+  });
+
+  it("lists statement payments in the transactions screen without letting them be edited", async () => {
+    const repo = cardSeed();
+    await repo.createTransaction({
+      kind: "expense", amountCents: 100000, date: "2026-09-10", accountId: null, cardId: 1, toAccountId: null,
+      categoryId: null, description: "Notebook", status: "settled", personId: 1,
+    });
+    const paidOn = today;
+    await repo.payStatement(1, "2026-09", { accountId: 1, amountCents: 100000, interestCents: 0, fineCents: 0, date: paidOn, personId: 1 });
+    renderWithProviders(<App />, repo, "/transactions");
+    expect(await screen.findByText("Pagamento da fatura · Visa")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Pagamento da fatura/ })).not.toBeInTheDocument();
+  });
+
+  it("changes the closing rule and shows validation errors", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, cardSeed(), "/cards/1");
+    await user.click(await screen.findByRole("button", { name: "Alterar fechamento" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.clear(within(dialog).getByLabelText("Dia de fechamento"));
+    await user.type(within(dialog).getByLabelText("Dia de fechamento"), "0");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    expect(await within(dialog).findByText("Informe um dia de 1 a 31.")).toBeInTheDocument();
+    await user.clear(within(dialog).getByLabelText("Dia de fechamento"));
+    await user.type(within(dialog).getByLabelText("Dia de fechamento"), "10");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+});

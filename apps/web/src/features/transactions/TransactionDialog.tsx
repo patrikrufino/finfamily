@@ -63,9 +63,26 @@ function TransactionForm({ transaction, onClose, onDelete }: Pick<Props, "transa
         <input id="tx-date" type="date" className={field} value={values.date} onChange={(e) => vm.setField("date", e.target.value)} />
       </div>
       <div>
-        <label htmlFor="tx-account" className={label}>{t("transactions.account")}</label>
-        <select id="tx-account" className={field} value={values.accountId ?? ""} onChange={(e) => vm.setField("accountId", Number(e.target.value))}>
-          {vm.accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+        <label htmlFor="tx-account" className={label}>
+          {values.kind === "expense" && vm.cards.length > 0 ? t("transactions.accountOrCard") : t("transactions.account")}
+        </label>
+        <select
+          id="tx-account"
+          className={field}
+          value={values.cardId !== null ? `c:${values.cardId}` : `a:${values.accountId ?? ""}`}
+          onChange={(e) => {
+            const [type, id] = e.target.value.split(":");
+            vm.setSource({ type: type === "c" ? "card" : "account", id: Number(id) });
+          }}
+        >
+          <optgroup label={t("accounts.title")}>
+            {vm.accounts.map((a) => <option key={a.id} value={`a:${a.id}`}>{a.name}</option>)}
+          </optgroup>
+          {values.kind === "expense" && vm.cards.length > 0 && (
+            <optgroup label={t("cards.title")}>
+              {vm.cards.map((c) => <option key={c.id} value={`c:${c.id}`}>{c.name}</option>)}
+            </optgroup>
+          )}
         </select>
       </div>
       {values.kind === "transfer" && (

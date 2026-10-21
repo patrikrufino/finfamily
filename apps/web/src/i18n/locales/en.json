@@ -77,7 +77,8 @@
     "incomeTotal": "Income",
     "expenseTotal": "Expenses",
     "category": "Category",
-    "noCategory": "No category"
+    "noCategory": "No category",
+    "accountOrCard": "Account or card"
   },
   "errors": {
     "invalid_amount": "Enter a valid amount.",
@@ -95,7 +96,19 @@
     "category_archived": "Archived category.",
     "category_name_taken": "An active category with this name already exists.",
     "category_used_by_income": "Income uses this category; it must keep accepting income.",
-    "category_not_found": "Category not found."
+    "category_not_found": "Category not found.",
+    "card_not_found": "Card not found.",
+    "card_name_taken": "An active card with this name already exists.",
+    "invalid_card": "Invalid card data.",
+    "invalid_day": "Enter a day from 1 to 31.",
+    "rule_in_past": "The rule cannot start before the open statement.",
+    "statement_empty": "This statement has no purchases.",
+    "invalid_payment": "Invalid payment data.",
+    "invalid_rule": "Invalid rule.",
+    "card_purchase_must_be_expense": "Only expenses can be charged to a card.",
+    "transfer_single_destination": "Choose a single destination.",
+    "statement_month_required": "Enter the statement.",
+    "fee_needs_statement": "Interest and fines need a statement."
   },
   "budget": {
     "total": "Budgeted",
@@ -124,5 +137,51 @@
       "warning": "Close to the limit",
       "over": "Over budget"
     }
+  },
+  "cards": {
+    "title": "Cards",
+    "new": "New card",
+    "name": "Name",
+    "limit": "Limit",
+    "closingDay": "Closing day",
+    "dueDay": "Due day",
+    "available": "Available",
+    "used": "Used",
+    "openStatement": "Open statement",
+    "dueOn": "Due {{date}}",
+    "empty": "No cards yet. Add the first one.",
+    "back": "Back",
+    "period": "Period",
+    "closesOn": "Closes on",
+    "total": "Total",
+    "paid": "Paid",
+    "remaining": "Remaining",
+    "fees": "Interest and fine",
+    "pay": "Pay statement",
+    "changeClosing": "Change closing day",
+    "payFrom": "Pay from account",
+    "amount": "Amount paid",
+    "interest": "Interest",
+    "fine": "Fine",
+    "date": "Payment date",
+    "validFrom": "Applies from the statement of",
+    "ruleHint": "Closed statements do not change. The new rule applies from the chosen statement onward.",
+    "purchases": "Purchases",
+    "payments": "Payments",
+    "feeItems": "Interest and fines",
+    "noPurchases": "No purchases in this statement.",
+    "removePayment": "Delete",
+    "statementPayment": "Statement payment",
+    "fee": {
+      "interest": "Interest",
+      "fine": "Fine"
+    },
+    "status": {
+      "open": "Open",
+      "closed": "Closed",
+      "paid": "Paid"
+    },
+    "archive": "Archive card",
+    "limitUsage": "Limit usage"
   }
 }

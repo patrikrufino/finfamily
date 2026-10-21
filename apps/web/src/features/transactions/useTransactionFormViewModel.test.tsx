@@ -14,6 +14,7 @@ const seeded = () =>
       { name: "Food", kind: "expense" },
       { name: "Salary", kind: "both" },
     ],
+    cards: [{ name: "Visa", limitCents: 500000, closingDay: 25, dueDay: 5 }],
   });
 
 const setup = async (repo = seeded(), options: Parameters<typeof useTransactionFormViewModel>[0] = {}) => {
@@ -109,5 +110,34 @@ describe("useTransactionFormViewModel", () => {
     await act(async () => { await result.current.submit(); });
     const [saved] = await repo.listTransactions({ month: "2026-10" });
     expect(saved?.categoryId).toBe(1);
+  });
+
+  it("lets an expense be charged to a card instead of an account", async () => {
+    const { result, repo } = await setup();
+    await waitFor(() => expect(result.current.cards).toHaveLength(1));
+    act(() => { result.current.setField("amountText", "80"); result.current.setSource({ type: "card", id: 1 }); });
+    expect(result.current.values).toMatchObject({ cardId: 1, accountId: null });
+    await act(async () => { await result.current.submit(); });
+    const [saved] = await repo.listTransactions({ month: "2026-10" });
+    expect(saved).toMatchObject({ accountId: null, cardId: 1, kind: "expense" });
+  });
+
+  it("goes back to an account when the kind stops being an expense", async () => {
+    const { result } = await setup();
+    await waitFor(() => expect(result.current.cards).toHaveLength(1));
+    act(() => result.current.setSource({ type: "card", id: 1 }));
+    act(() => result.current.setField("kind", "income"));
+    expect(result.current.values.cardId).toBeNull();
+    expect(result.current.values.accountId).toBe(result.current.accounts[0]!.id);
+  });
+
+  it("prefills a card purchase when editing", async () => {
+    const repo = seeded();
+    const existing = await repo.createTransaction({
+      kind: "expense", amountCents: 5000, date: "2026-10-02", accountId: null, cardId: 1, toAccountId: null,
+      categoryId: null, description: "Shoes", status: "settled", personId: 1,
+    });
+    const { result } = await setup(repo, { transaction: existing });
+    expect(result.current.values).toMatchObject({ cardId: 1, accountId: null, description: "Shoes" });
   });
 });

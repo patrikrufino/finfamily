@@ -62,3 +62,29 @@ describe("validateTransactionCategory", () => {
     expect(validateTransactionCategory("transfer", salary)).toContain("category_not_allowed");
   });
 });
+
+describe("card rules", () => {
+  it("accepts a card purchase: expense, card, no account", () => {
+    expect(validateTransactionInput({ ...valid, accountId: null, cardId: 3 })).toEqual([]);
+  });
+
+  it("requires an account or a card", () => {
+    expect(validateTransactionInput({ ...valid, accountId: null, cardId: null })).toContain("account_required");
+  });
+
+  it("only allows expenses on a card without account", () => {
+    expect(validateTransactionInput({ ...valid, kind: "income", accountId: null, cardId: 3 })).toContain("card_purchase_must_be_expense");
+  });
+
+  it("accepts a statement payment: transfer from an account to a card", () => {
+    expect(validateTransactionInput({ ...valid, kind: "transfer", cardId: 3, statementMonth: "2026-10" })).toEqual([]);
+  });
+
+  it("rejects a statement payment without a statement month", () => {
+    expect(validateTransactionInput({ ...valid, kind: "transfer", cardId: 3 })).toContain("statement_month_required");
+  });
+
+  it("rejects an account transfer that also targets a card", () => {
+    expect(validateTransactionInput({ ...valid, kind: "transfer", cardId: 3, toAccountId: 2, statementMonth: "2026-10" })).toContain("transfer_single_destination");
+  });
+});

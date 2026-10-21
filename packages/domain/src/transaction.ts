@@ -12,9 +12,15 @@ export interface TransactionInput {
   amount: Money;
   /** ISO date, `YYYY-MM-DD`. */
   date: string;
-  accountId: number;
+  /** Null for card purchases, which are charged to a card instead of an account. */
+  accountId: number | null;
   toAccountId: number | null;
   categoryId: number | null;
+  /** Card purchase, statement payment (transfer) or statement fee (expense with `feeKind`). */
+  cardId?: number | null;
+  /** Statement (`YYYY-MM`) a payment or fee refers to. */
+  statementMonth?: string | null;
+  feeKind?: "interest" | "fine" | null;
   description: string;
   status: TransactionStatus;
   personId: number;
@@ -31,7 +37,12 @@ export type TransactionError =
   | "transfer_same_account"
   | "destination_only_for_transfer"
   | "category_not_allowed"
-  | "category_archived";
+  | "category_archived"
+  | "account_required"
+  | "card_purchase_must_be_expense"
+  | "transfer_single_destination"
+  | "statement_month_required"
+  | "fee_needs_statement";
 
 export function isValidIsoDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -43,12 +54,20 @@ export function validateTransactionInput(input: TransactionInput): TransactionEr
   const errors: TransactionError[] = [];
   if (input.amount.cents <= 0) errors.push("amount_must_be_positive");
   if (!isValidIsoDate(input.date)) errors.push("invalid_date");
+  const cardId = input.cardId ?? null;
+  if (input.accountId === null) {
+    if (cardId === null) errors.push("account_required");
+    else if (input.kind !== "expense") errors.push("card_purchase_must_be_expense");
+  }
   if (input.kind === "transfer") {
-    if (input.toAccountId === null) errors.push("transfer_needs_destination");
-    else if (input.toAccountId === input.accountId) errors.push("transfer_same_account");
+    if (input.toAccountId === null && cardId === null) errors.push("transfer_needs_destination");
+    else if (input.toAccountId !== null && cardId !== null) errors.push("transfer_single_destination");
+    else if (input.toAccountId !== null && input.toAccountId === input.accountId) errors.push("transfer_same_account");
+    if (cardId !== null && !input.statementMonth) errors.push("statement_month_required");
   } else if (input.toAccountId !== null) {
     errors.push("destination_only_for_transfer");
   }
+  if (input.feeKind && (cardId === null || !input.statementMonth)) errors.push("fee_needs_statement");
   return errors;
 }
 
