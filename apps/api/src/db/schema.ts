@@ -62,6 +62,24 @@ export const installmentPlans = sqliteTable("installment_plans", {
   personId: integer("person_id").notNull().references(() => people.id),
 });
 
+export const debts = sqliteTable("debts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  creditor: text("creditor").notNull(),
+  originalCents: integer("original_cents").notNull(),
+  openedOn: text("opened_on").notNull(),
+  categoryId: integer("category_id").references(() => categories.id),
+  personId: integer("person_id").notNull().references(() => people.id),
+});
+
+export const debtEntries = sqliteTable("debt_entries", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  debtId: integer("debt_id").notNull().references(() => debts.id),
+  kind: text("kind", { enum: ["interest", "discount"] }).notNull(),
+  amountCents: integer("amount_cents").notNull(),
+  date: text("date").notNull(),
+  note: text("note").notNull().default(""),
+});
+
 export const transactions = sqliteTable("transactions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   kind: text("kind", { enum: ["income", "expense", "transfer"] }).notNull(),
@@ -76,6 +94,7 @@ export const transactions = sqliteTable("transactions", {
   adjustment: integer("adjustment", { mode: "boolean" }).notNull().default(false),
   planId: integer("plan_id").references(() => installmentPlans.id),
   installmentNumber: integer("installment_number"),
+  debtId: integer("debt_id").references(() => debts.id),
   description: text("description").notNull().default(""),
   status: text("status", { enum: ["settled", "scheduled"] }).notNull().default("settled"),
   personId: integer("person_id").notNull().references(() => people.id),

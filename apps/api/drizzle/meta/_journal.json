@@ -43,6 +43,13 @@
       "when": 1792541818339,
       "tag": "0005_installments",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1792543333040,
+      "tag": "0006_debts",
+      "breakpoints": true
     }
   ]
 }

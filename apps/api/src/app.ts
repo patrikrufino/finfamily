@@ -6,6 +6,7 @@ import { budgetRoutes } from "./routes/budget";
 import { cardsRoutes } from "./routes/cards";
 import { categoriesRoutes } from "./routes/categories";
 import { accountsRoutes } from "./routes/accounts";
+import { debtsRoutes } from "./routes/debts";
 import { installmentsRoutes } from "./routes/installments";
 import { transactionsRoutes } from "./routes/transactions";
 
@@ -33,6 +34,7 @@ export function createApp(db: AppDatabase, { today = localToday }: AppOptions = 
   app.route("/api/categories", categoriesRoutes(db));
   app.route("/api/cards", cardsRoutes(db, today));
   app.route("/", budgetRoutes(db));
+  app.route("/api/debts", debtsRoutes(db, today));
   app.route("/api/installment-plans", installmentsRoutes(db, today));
   app.route("/api/transactions", transactionsRoutes(db));
 
