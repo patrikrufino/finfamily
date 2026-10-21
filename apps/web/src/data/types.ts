@@ -52,6 +52,8 @@ export interface CategoryDto {
   id: number;
   name: string;
   kind: CategoryKind;
+  /** One of the picker icons, or null. */
+  icon: string | null;
   archived: boolean;
 }
 
@@ -59,6 +61,7 @@ export interface BudgetCategoryDto {
   categoryId: number;
   name: string;
   kind: CategoryKind;
+  icon: string | null;
   archived: boolean;
   budgetCents: number;
   spentCents: number;
@@ -277,6 +280,7 @@ export interface DashboardDto {
     highlights: {
       categoryId: number;
       name: string;
+      icon: string | null;
       status: BudgetStatus;
       ratio: number;
       budgetCents: number;
@@ -310,7 +314,11 @@ export interface BackupStatusDto {
   schedule: { intervalHours: number; keep: number };
 }
 
-export type NewCategory = Pick<CategoryDto, "name" | "kind">;
+export interface NewCategory {
+  name: string;
+  kind: CategoryKind;
+  icon?: string | null;
+}
 
 type CardFields = "cardId" | "statementMonth" | "feeKind" | "adjustment" | "planId" | "installmentNumber" | "debtId" | "recurringId";
 /** Card-related fields default to null when omitted. */
@@ -348,7 +356,10 @@ export interface FinanceRepository {
   deleteTransaction(id: number): Promise<void>;
   listCategories(): Promise<CategoryDto[]>;
   createCategory(input: NewCategory): Promise<CategoryDto>;
-  updateCategory(id: number, patch: Partial<Pick<CategoryDto, "name" | "kind" | "archived">>): Promise<CategoryDto>;
+  /** The kind of a category never changes. */
+  updateCategory(id: number, patch: Partial<Pick<CategoryDto, "name" | "icon" | "archived">>): Promise<CategoryDto>;
+  /** Adds the default categories that are missing; returns how many were created. */
+  addDefaultCategories(): Promise<{ created: number }>;
   setBudget(categoryId: number, month: string, amountCents: number): Promise<void>;
   getBudget(month: string): Promise<BudgetReportDto>;
   listCards(): Promise<CardDto[]>;

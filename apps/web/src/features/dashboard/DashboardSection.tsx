@@ -7,6 +7,7 @@ import { formatMonth, formatShortDate } from "../../shared/format";
 import { card } from "../../shared/ui";
 import { useLocale } from "../../shared/useLocale";
 import { BudgetBar } from "../budget/BudgetBar";
+import { categoryLabel } from "../categories/CategoryIcon";
 import { useDashboardViewModel } from "./useDashboardViewModel";
 
 const sectionTitle = css({ fontWeight: "bold", fontSize: "lg" });
@@ -62,7 +63,7 @@ export function DashboardSection() {
                 {d.budget.highlights.map((h) => (
                   <li key={h.categoryId} className={css({ display: "flex", justifyContent: "space-between", fontSize: "sm" })}>
                     <span>
-                      <strong>{h.name}</strong> · {h.status === "over" ? t("dashboard.over") : t("dashboard.near")}
+                      <strong>{categoryLabel(h)}</strong> · {h.status === "over" ? t("dashboard.over") : t("dashboard.near")}
                     </span>
                     <span className={css({ color: h.remainingCents < 0 ? "red.500" : "muted" })}>
                       {h.remainingCents < 0

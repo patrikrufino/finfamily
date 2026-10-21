@@ -8,8 +8,8 @@ const seeded = async () => {
   const repo = createFakeRepository({
     accounts: [{ name: "Checking", type: "checking", initialBalanceCents: 0 }],
     categories: [
-      { name: "Food", kind: "expense" },
-      { name: "Salary", kind: "both" },
+      { name: "Food", kind: "expense", icon: "🛒" },
+      { name: "Salary", kind: "income", icon: "💼" },
     ],
   });
   await repo.createTransaction({
@@ -22,8 +22,9 @@ const seeded = async () => {
 describe("useBudgetViewModel", () => {
   it("loads the month report", async () => {
     const { result } = renderHookWithProviders(() => useBudgetViewModel("2026-10"), await seeded());
-    await waitFor(() => expect(result.current.report?.categories).toHaveLength(2));
-    expect(result.current.report?.categories[0]).toMatchObject({ name: "Food", spentCents: 20000, status: "none" });
+    await waitFor(() => expect(result.current.report?.categories).toHaveLength(1));
+    // Income categories have no budget, so only expense categories are listed.
+    expect(result.current.report?.categories[0]).toMatchObject({ name: "Food", icon: "🛒", spentCents: 20000, status: "none" });
   });
 
   it("sets a budget from pt-BR text and recomputes progress", async () => {
@@ -52,17 +53,11 @@ describe("useBudgetViewModel", () => {
     await waitFor(() => expect(result.current.report?.categories[0]?.budgetCents).toBe(0));
   });
 
-  it("creates categories and surfaces duplicates", async () => {
+  it("cannot set a budget on an income category", async () => {
     const { result } = renderHookWithProviders(() => useBudgetViewModel("2026-10"), await seeded());
-    let ok: unknown, dup: unknown, empty: unknown;
-    await act(async () => {
-      ok = await result.current.createCategory({ name: "Transport", kind: "expense" });
-      dup = await result.current.createCategory({ name: "transport", kind: "expense" });
-      empty = await result.current.createCategory({ name: "  ", kind: "expense" });
-    });
-    expect(ok).toEqual({ ok: true });
-    expect(dup).toEqual({ ok: false, error: "category_name_taken" });
-    expect(empty).toEqual({ ok: false, error: "name_required" });
+    let outcome: unknown;
+    await act(async () => { outcome = await result.current.setBudget(2, "100"); });
+    expect(outcome).toEqual({ ok: false, error: "budget_only_for_expense" });
   });
 
   it("navigates months and reloads", async () => {

@@ -57,6 +57,20 @@
       "when": 1792544061515,
       "tag": "0007_recurring",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1792545661304,
+      "tag": "0008_category_icon",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1792545662236,
+      "tag": "0009_split_category_kinds",
+      "breakpoints": true
     }
   ]
 }

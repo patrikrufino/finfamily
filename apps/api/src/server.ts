@@ -7,11 +7,16 @@ import { createApp } from "./app";
 import { startBackupSchedule } from "./backup/backup";
 import { loadConfig, loadTlsOptions } from "./config";
 import { createDatabase } from "./db/client";
+import { seedDefaultCategories } from "./routes/categories";
 
 const config = loadConfig(process.env, dirname(fileURLToPath(import.meta.url)) + "/..");
 const tls = loadTlsOptions(process.env);
 
 const db = createDatabase(config.databasePath);
+// A brand new database starts with the basic categories; an existing one is never touched here.
+if ((db.$client.prepare("select count(*) as n from categories").get() as { n: number }).n === 0) {
+  console.log(`Created ${seedDefaultCategories(db).created} default categories.`);
+}
 const stopBackups = startBackupSchedule(db.$client, config.backup);
 
 const protocol = tls ? "https" : "http";

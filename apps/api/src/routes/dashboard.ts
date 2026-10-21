@@ -54,8 +54,8 @@ export function dashboardRoutes(db: AppDatabase, today: () => string) {
       .filter((cat) => cat.status === "warning" || cat.status === "over")
       .sort((a, b) => b.ratio - a.ratio)
       .slice(0, MAX_HIGHLIGHTS)
-      .map(({ categoryId, name, status, ratio, budgetCents, spentCents, remainingCents }) => ({
-        categoryId, name, status, ratio, budgetCents, spentCents, remainingCents,
+      .map(({ categoryId, name, icon, status, ratio, budgetCents, spentCents, remainingCents }) => ({
+        categoryId, name, icon, status, ratio, budgetCents, spentCents, remainingCents,
       }));
 
     // Unpaid statements already due or due within the next 30 days.

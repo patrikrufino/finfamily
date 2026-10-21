@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { css } from "../../../styled-system/css";
 import type { TransactionDto } from "../../data/types";
 import { Modal } from "../../shared/Modal";
+import { categoryLabel } from "../categories/CategoryIcon";
 import { useLocale } from "../../shared/useLocale";
 import { dangerButton, errorText, field, label, primaryButton } from "../../shared/ui";
 import { useTransactionFormViewModel } from "./useTransactionFormViewModel";
@@ -101,7 +102,7 @@ function TransactionForm({ transaction, onClose, onDelete }: Pick<Props, "transa
           <label htmlFor="tx-category" className={label}>{t("transactions.category")}</label>
           <select id="tx-category" className={field} value={values.categoryId ?? ""} onChange={(e) => vm.setField("categoryId", e.target.value ? Number(e.target.value) : null)}>
             <option value="">{t("transactions.noCategory")}</option>
-            {vm.categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {vm.categories.map((c) => <option key={c.id} value={c.id}>{categoryLabel(c)}</option>)}
           </select>
         </div>
       )}

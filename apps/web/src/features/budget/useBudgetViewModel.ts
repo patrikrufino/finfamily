@@ -1,4 +1,4 @@
-import { Money, type CategoryKind } from "@finfamily/domain";
+import { Money } from "@finfamily/domain";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useRepository } from "../../data/RepositoryContext";
@@ -15,18 +15,13 @@ export function useBudgetViewModel(initialMonth: string = currentMonth()) {
 
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["budget"] });
-    queryClient.invalidateQueries({ queryKey: ["categories"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard"] });
   };
 
   const query = useQuery({ queryKey: ["budget", month], queryFn: () => repository.getBudget(month) });
   const setBudgetMutation = useMutation({
     mutationFn: ({ categoryId, cents }: { categoryId: number; cents: number }) =>
       repository.setBudget(categoryId, month, cents),
-    onSuccess: refresh,
-  });
-  const createMutation = useMutation({ mutationFn: repository.createCategory, onSuccess: refresh });
-  const updateMutation = useMutation({
-    mutationFn: ({ id, archived }: { id: number; archived: boolean }) => repository.updateCategory(id, { archived }),
     onSuccess: refresh,
   });
 
@@ -48,18 +43,5 @@ export function useBudgetViewModel(initialMonth: string = currentMonth()) {
         return { ok: false, error: e instanceof ApiError ? (e.codes[0] ?? "unknown") : "unknown" };
       }
     },
-
-    async createCategory(input: { name: string; kind: CategoryKind }): Promise<CommandResult> {
-      const name = input.name.trim();
-      if (!name) return { ok: false, error: "name_required" };
-      try {
-        await createMutation.mutateAsync({ name, kind: input.kind });
-        return { ok: true };
-      } catch (e) {
-        return { ok: false, error: e instanceof ApiError ? (e.codes[0] ?? "unknown") : "unknown" };
-      }
-    },
-
-    archiveCategory: (id: number) => updateMutation.mutateAsync({ id, archived: true }).then(() => undefined),
   };
 }

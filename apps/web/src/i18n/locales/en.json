@@ -155,7 +155,10 @@
     "recurring_single_source": "Choose only one account or card.",
     "recurring_income_needs_account": "Recurring income must go to an account.",
     "recurring_and_installments": "Choose installments or repeating, not both.",
-    "backup_failed": "Could not create the backup."
+    "backup_failed": "Could not create the backup.",
+    "invalid_icon": "Invalid icon.",
+    "budget_only_for_expense": "Only expense categories have a budget.",
+    "invalid_kind": "Invalid category type."
   },
   "budget": {
     "total": "Budgeted",
@@ -169,15 +172,7 @@
     "amountHint": "Applies from this month on and does not change earlier months. Leave empty to remove.",
     "uncategorized": "Uncategorized",
     "committed": "Scheduled",
-    "empty": "No categories yet. Create the first one.",
-    "newCategory": "New category",
-    "categoryName": "Name",
-    "categoryKind": "Kind",
-    "archive": "Archive category",
-    "kinds": {
-      "expense": "Expenses only",
-      "both": "Expenses and income"
-    },
+    "empty": "No expense categories yet. Create them in Categories.",
     "status": {
       "none": "No budget",
       "ok": "Within budget",
@@ -437,5 +432,44 @@
     "message": "An unexpected error happened. Your data was not affected.",
     "reload": "Reload",
     "home": "Go to home"
+  },
+  "categories": {
+    "title": "Categories",
+    "kindTabs": "Category type",
+    "expenses": "Expenses",
+    "income": "Income",
+    "new": "New category",
+    "name": "Name",
+    "icon": "Icon",
+    "noIcon": "No icon",
+    "edit": "Edit category",
+    "archive": "Archive category",
+    "defaults": "Add default categories",
+    "defaultsAdded": "{{count}} categories added.",
+    "defaultsAddedOne": "1 category added.",
+    "defaultsNone": "All default categories already exist.",
+    "emptyExpense": "No expense categories.",
+    "emptyIncome": "No income categories.",
+    "manage": "Manage categories",
+    "kindFixed": "The type cannot change after it is created.",
+    "back": "Back",
+    "kindExpense": "Expense category",
+    "kindIncome": "Income category",
+    "iconGroups": {
+      "money": "Money",
+      "home": "Home",
+      "bills": "Bills and subscriptions",
+      "vehicle": "Car",
+      "transport": "Transport",
+      "food": "Food",
+      "care": "Personal care",
+      "education": "Education",
+      "clothing": "Clothing",
+      "health": "Health",
+      "leisure": "Leisure",
+      "family": "Family and pets",
+      "debts": "Debts",
+      "misc": "Other"
+    }
   }
 }

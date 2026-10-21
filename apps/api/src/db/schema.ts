@@ -16,7 +16,9 @@ export const accounts = sqliteTable("accounts", {
 export const categories = sqliteTable("categories", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
-  kind: text("kind", { enum: ["expense", "both"] }).notNull().default("expense"),
+  kind: text("kind", { enum: ["expense", "income"] }).notNull().default("expense"),
+  /** One of the icons offered by the picker (see the domain package). */
+  icon: text("icon"),
   archived: integer("archived", { mode: "boolean" }).notNull().default(false),
 });
 
