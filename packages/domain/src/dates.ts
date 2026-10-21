@@ -29,3 +29,8 @@ export function clampDay(month: string, day: number): number {
 export function isoDate(month: string, day: number): string {
   return `${month}-${String(clampDay(month, day)).padStart(2, "0")}`;
 }
+
+/** Same day of the month `delta` months later, clamped to that month's last day (31 Jan + 1 -> 28 Feb). */
+export function addMonthsToDate(date: string, delta: number): string {
+  return isoDate(addMonths(monthOf(date), delta), Number(date.slice(8, 10)));
+}

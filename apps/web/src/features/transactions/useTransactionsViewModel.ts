@@ -41,7 +41,7 @@ export function useTransactionsViewModel(initialMonth: string = currentMonth()) 
 
   const transactions = query.data ?? [];
   const sumOf = (kind: "income" | "expense") =>
-    transactions.filter((t) => t.kind === kind && t.status === "settled").reduce((s, t) => s + t.amountCents, 0);
+    transactions.filter((t) => t.kind === kind && t.status === "settled" && !t.adjustment).reduce((s, t) => s + t.amountCents, 0);
 
   return {
     month,

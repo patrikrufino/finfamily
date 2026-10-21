@@ -1,10 +1,10 @@
-import { ACCOUNT_TYPES, accountBalance } from "@finfamily/domain";
+import { ACCOUNT_TYPES, Money, accountBalance, balanceAdjustment, isValidIsoDate } from "@finfamily/domain";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import type { AppDatabase } from "../db/client";
-import { accounts, transactions } from "../db/schema";
-import { toDomainAccount, toDomainTransaction } from "../mappers";
+import { accounts, people, transactions } from "../db/schema";
+import { toDomainAccount, toDomainTransaction, transactionDto } from "../mappers";
 
 const createSchema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -13,10 +13,18 @@ const createSchema = z.object({
 });
 const patchSchema = z.object({
   name: z.string().trim().min(1).max(80).optional(),
+  initialBalanceCents: z.number().int().optional(),
   archived: z.boolean().optional(),
 });
 
-export function accountsRoutes(db: AppDatabase) {
+const adjustSchema = z.object({
+  targetBalanceCents: z.number().int(),
+  personId: z.number().int(),
+  date: z.string().refine(isValidIsoDate).optional(),
+  description: z.string().trim().min(1).max(200).default("Ajuste de saldo"),
+});
+
+export function accountsRoutes(db: AppDatabase, today: () => string) {
   const app = new Hono();
 
   const withBalances = (row: typeof accounts.$inferSelect) => {
@@ -61,6 +69,30 @@ export function accountsRoutes(db: AppDatabase) {
     if (!next.archived && activeNameTaken(next.name, id)) return c.json({ errors: ["account_name_taken"] }, 409);
     const row = db.update(accounts).set(parsed.data).where(eq(accounts.id, id)).returning().get();
     return c.json(withBalances(row));
+  });
+
+  /**
+   * Brings the settled balance to `targetBalanceCents` by recording the difference as an adjustment
+   * transaction (income or expense). Adjustments are not spending: budget and month totals ignore them.
+   */
+  app.post("/:id/adjust", async (c) => {
+    const id = Number(c.req.param("id"));
+    const row = db.select().from(accounts).where(eq(accounts.id, id)).get();
+    if (!row) return c.json({ errors: ["account_not_found"] }, 404);
+    const parsed = adjustSchema.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) return c.json({ errors: ["invalid_adjustment"] }, 422);
+    const { targetBalanceCents, personId, description } = parsed.data;
+    if (!db.select().from(people).where(eq(people.id, personId)).get()) return c.json({ errors: ["person_not_found"] }, 404);
+
+    const txs = db.select().from(transactions).all().map(toDomainTransaction);
+    const adjustment = balanceAdjustment(accountBalance(toDomainAccount(row), txs), Money.fromCents(targetBalanceCents));
+    if (!adjustment) return c.json({ errors: ["no_adjustment_needed"] }, 422);
+
+    const created = db.insert(transactions).values({
+      kind: adjustment.kind, amountCents: adjustment.amount.cents, date: parsed.data.date ?? today(), accountId: id,
+      description, status: "settled", personId, adjustment: true,
+    }).returning().get();
+    return c.json(transactionDto(created), 201);
   });
 
   return app;

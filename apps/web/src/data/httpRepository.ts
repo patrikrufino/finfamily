@@ -3,6 +3,10 @@ import {
   type AccountDto,
   type BudgetReportDto,
   type CardDto,
+  type DebtDetailDto,
+  type DebtDto,
+  type PlanDetailDto,
+  type PlanDto,
   type StatementDto,
   type CategoryDto,
   type FinanceRepository,
@@ -32,6 +36,7 @@ export const httpRepository: FinanceRepository = {
   listAccounts: () => request<AccountDto[]>("/api/accounts"),
   createAccount: (input) => request<AccountDto>("/api/accounts", send("POST", input)),
   updateAccount: (id, patch) => request<AccountDto>(`/api/accounts/${id}`, send("PATCH", patch)),
+  adjustAccount: (id, input) => request<TransactionDto>(`/api/accounts/${id}/adjust`, send("POST", input)),
   listTransactions: ({ month, accountId, personId, categoryId, cardId }) => {
     const qs = new URLSearchParams({ month });
     if (accountId) qs.set("accountId", String(accountId));
@@ -55,6 +60,19 @@ export const httpRepository: FinanceRepository = {
   setCardRule: (cardId, rule) => request<void>(`/api/cards/${cardId}/rules`, send("POST", rule)),
   getStatement: (cardId, month) =>
     request<StatementDto>(`/api/cards/${cardId}/statement${month ? `?month=${month}` : ""}`),
+  listDebts: () => request<DebtDto[]>("/api/debts"),
+  getDebt: (id) => request<DebtDetailDto>(`/api/debts/${id}`),
+  createDebt: (input) => request<DebtDetailDto>("/api/debts", send("POST", input)),
+  addDebtInterest: (id, input) => request<DebtDetailDto>(`/api/debts/${id}/interest`, send("POST", input)),
+  addDebtDiscount: (id, input) => request<DebtDetailDto>(`/api/debts/${id}/discount`, send("POST", input)),
+  payDebt: (id, input) => request<DebtDetailDto>(`/api/debts/${id}/payments`, send("POST", input)),
+  removeDebtEntry: (debtId, entryId) => request<void>(`/api/debts/${debtId}/entries/${entryId}`, send("DELETE")),
+  deleteDebt: (id) => request<void>(`/api/debts/${id}`, send("DELETE")),
+  listPlans: () => request<PlanDto[]>("/api/installment-plans"),
+  getPlan: (id) => request<PlanDetailDto>(`/api/installment-plans/${id}`),
+  createPlan: (input) => request<PlanDetailDto>("/api/installment-plans", send("POST", input)),
+  anticipatePlan: (id, input) => request<PlanDetailDto>(`/api/installment-plans/${id}/anticipate`, send("POST", input)),
+  cancelPlan: (id) => request<void>(`/api/installment-plans/${id}`, send("DELETE")),
   payStatement: (cardId, month, input) =>
     request<StatementDto>(`/api/cards/${cardId}/statements/${month}/payments`, send("POST", input)),
 };

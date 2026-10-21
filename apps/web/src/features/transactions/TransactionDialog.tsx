@@ -1,9 +1,10 @@
-import { TRANSACTION_KINDS } from "@finfamily/domain";
+import { Money, TRANSACTION_KINDS } from "@finfamily/domain";
 import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { css } from "../../../styled-system/css";
 import type { TransactionDto } from "../../data/types";
 import { Modal } from "../../shared/Modal";
+import { useLocale } from "../../shared/useLocale";
 import { dangerButton, errorText, field, label, primaryButton } from "../../shared/ui";
 import { useTransactionFormViewModel } from "./useTransactionFormViewModel";
 
@@ -16,6 +17,7 @@ interface Props {
 
 function TransactionForm({ transaction, onClose, onDelete }: Pick<Props, "transaction" | "onClose" | "onDelete">) {
   const { t } = useTranslation();
+  const locale = useLocale();
   const vm = useTransactionFormViewModel({ transaction });
   const { values } = vm;
 
@@ -55,7 +57,7 @@ function TransactionForm({ transaction, onClose, onDelete }: Pick<Props, "transa
       </div>
 
       <div>
-        <label htmlFor="tx-amount" className={label}>{t("transactions.amount")}</label>
+        <label htmlFor="tx-amount" className={label}>{vm.installmentPreview ? t("installments.total") : t("transactions.amount")}</label>
         <input id="tx-amount" className={field} inputMode="decimal" placeholder="0,00" value={values.amountText} onChange={(e) => vm.setField("amountText", e.target.value)} />
       </div>
       <div>
@@ -107,10 +109,25 @@ function TransactionForm({ transaction, onClose, onDelete }: Pick<Props, "transa
         <label htmlFor="tx-description" className={label}>{t("transactions.description")}</label>
         <input id="tx-description" className={field} value={values.description} onChange={(e) => vm.setField("description", e.target.value)} />
       </div>
-      <label className={css({ display: "flex", alignItems: "center", gap: "2" })}>
-        <input type="checkbox" checked={values.settled} onChange={(e) => vm.setField("settled", e.target.checked)} />
-        {t("transactions.settled")}
-      </label>
+      {vm.canSplitInInstallments && (
+        <div>
+          <label htmlFor="tx-installments" className={label}>{t("installments.count")}</label>
+          <input id="tx-installments" className={field} inputMode="numeric" placeholder="1" value={values.installmentsText} onChange={(e) => vm.setField("installmentsText", e.target.value)} />
+          <p className={css({ color: "muted", fontSize: "xs", marginTop: "1" })} data-testid="installment-preview">
+            {vm.installmentPreview
+              ? vm.installmentPreview.firstCents === vm.installmentPreview.lastCents
+                ? t("installments.previewEqual", { count: vm.installmentPreview.count, first: Money.fromCents(vm.installmentPreview.firstCents).format(locale) })
+                : t("installments.previewLast", { count: vm.installmentPreview.count, first: Money.fromCents(vm.installmentPreview.firstCents).format(locale), last: Money.fromCents(vm.installmentPreview.lastCents).format(locale) })
+              : t("installments.countHint")}
+          </p>
+        </div>
+      )}
+      {!vm.installmentPreview && (
+        <label className={css({ display: "flex", alignItems: "center", gap: "2" })}>
+          <input type="checkbox" checked={values.settled} onChange={(e) => vm.setField("settled", e.target.checked)} />
+          {t("transactions.settled")}
+        </label>
+      )}
 
       {vm.errors.length > 0 && (
         <ul role="alert" className={css({ listStyle: "none" })}>

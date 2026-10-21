@@ -5,3 +5,5 @@ export * from "./category";
 export * from "./budget";
 export * from "./dates";
 export * from "./card";
+export * from "./installment";
+export * from "./debt";

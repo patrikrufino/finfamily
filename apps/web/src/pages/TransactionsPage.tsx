@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRepository } from "../data/RepositoryContext";
 import type { TransactionDto } from "../data/types";
 import { TransactionDialog } from "../features/transactions/TransactionDialog";
+import { Link } from "react-router";
 import { useTransactionsViewModel } from "../features/transactions/useTransactionsViewModel";
 import { MoneyText } from "../shared/MoneyText";
 import { MonthNavigator } from "../shared/MonthNavigator";
@@ -18,11 +19,13 @@ export function TransactionsPage() {
   const vm = useTransactionsViewModel();
   const [editing, setEditing] = useState<TransactionDto | null>(null);
   const accounts = useQuery({ queryKey: ["accounts"], queryFn: () => repository.listAccounts() }).data ?? [];
+  const plans = useQuery({ queryKey: ["plans"], queryFn: () => repository.listPlans() }).data ?? [];
   const cards = useQuery({ queryKey: ["cards"], queryFn: () => repository.listCards() }).data ?? [];
   const categories = useQuery({ queryKey: ["categories"], queryFn: () => repository.listCategories() }).data ?? [];
   const people = useQuery({ queryKey: ["people"], queryFn: () => repository.listPeople() }).data ?? [];
 
   const accountName = (id: number | null) => accounts.find((a) => a.id === id)?.name ?? "";
+  const planCount = (id: number | null) => plans.find((p) => p.id === id)?.count;
   const cardName = (id: number | null) => cards.find((c) => c.id === id)?.name ?? "";
   /** Payments and fees belong to a statement; they are managed from the card screen, not edited here. */
   const statementTitle = (tx: TransactionDto) =>
@@ -34,7 +37,10 @@ export function TransactionsPage() {
 
   return (
     <div className={css({ display: "grid", gap: "4" })}>
-      <h1 className={css({ fontSize: "xl", fontWeight: "bold" })}>{t("pages.transactions")}</h1>
+      <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center" })}>
+        <h1 className={css({ fontSize: "xl", fontWeight: "bold" })}>{t("pages.transactions")}</h1>
+        <Link to="/installments" className={css({ color: "primary", fontSize: "sm" })}>{t("installments.title")}</Link>
+      </div>
 
       <MonthNavigator month={vm.month} onPrevious={vm.previousMonth} onNext={vm.nextMonth} />
 
@@ -68,7 +74,12 @@ export function TransactionsPage() {
         <ul className={css({ display: "grid", gap: "2", listStyle: "none" })}>
           {vm.transactions.map((tx) => {
             const isStatementItem = tx.statementMonth !== null;
-            const title = isStatementItem ? statementTitle(tx) : tx.description || t(`transactions.${tx.kind}`);
+            const isPlanItem = tx.planId !== null;
+            const isDebtItem = tx.debtId !== null;
+            const planTitle = tx.installmentNumber === null
+              ? `${t("installments.anticipation")} · ${tx.description.replace(/^Antecipação · /, "")}`
+              : `${tx.description} (${t("installments.badge", { n: tx.installmentNumber, count: planCount(tx.planId) ?? "?" })})`;
+            const title = isStatementItem ? statementTitle(tx) : isPlanItem ? planTitle : isDebtItem ? tx.description : tx.adjustment ? t("transactions.adjustment") : tx.description || t(`transactions.${tx.kind}`);
             const source = tx.accountId !== null ? accountName(tx.accountId) : cardName(tx.cardId);
             const itemClass = `${card} ${css({ width: "100%", display: "flex", justifyContent: "space-between", textAlign: "left", opacity: tx.status === "scheduled" ? 0.7 : 1 })}`;
             const content = (
@@ -91,6 +102,14 @@ export function TransactionsPage() {
               <li key={tx.id}>
                 {isStatementItem ? (
                   <div className={itemClass}>{content}</div>
+                ) : isDebtItem ? (
+                  <Link to={`/debts/${tx.debtId}`} className={`${itemClass} ${css({ cursor: "pointer" })}`} aria-label={`${title} — ${t("debts.view")}`}>
+                    {content}
+                  </Link>
+                ) : isPlanItem ? (
+                  <Link to={`/installments/${tx.planId}`} className={`${itemClass} ${css({ cursor: "pointer" })}`} aria-label={`${title} — ${t("installments.view")}`}>
+                    {content}
+                  </Link>
                 ) : (
                   <button type="button" onClick={() => setEditing(tx)} className={`${itemClass} ${css({ cursor: "pointer" })}`}>
                     {content}

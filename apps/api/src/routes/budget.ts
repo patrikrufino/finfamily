@@ -34,7 +34,8 @@ export function budgetRoutes(db: AppDatabase) {
       categoryId: b.categoryId, fromMonth: b.fromMonth, amount: Money.fromCents(b.amountCents),
     }));
     const expenses = db.select().from(transactions)
-      .where(and(like(transactions.date, `${month}-%`), eq(transactions.kind, "expense"))).all();
+      .where(and(like(transactions.date, `${month}-%`), eq(transactions.kind, "expense"), eq(transactions.adjustment, false)))
+      .all();
 
     const sumFor = (categoryId: number | null, status: "settled" | "scheduled") =>
       expenses.filter((t) => t.categoryId === categoryId && t.status === status).reduce((s, t) => s + t.amountCents, 0);

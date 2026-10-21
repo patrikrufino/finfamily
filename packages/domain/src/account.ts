@@ -31,3 +31,13 @@ export function accountBalance(
     return balance;
   }, account.initialBalance);
 }
+
+/** The transaction that brings `current` to `target`, or null when they already match. */
+export function balanceAdjustment(
+  current: Money,
+  target: Money,
+): { kind: "income" | "expense"; amount: Money } | null {
+  const diff = target.subtract(current);
+  if (diff.cents === 0) return null;
+  return diff.cents > 0 ? { kind: "income", amount: diff } : { kind: "expense", amount: diff.negate() };
+}
