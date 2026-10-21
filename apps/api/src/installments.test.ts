@@ -115,6 +115,11 @@ describe("listing and detail", () => {
     });
   });
 
+  it("tells which installments can be anticipated", async () => {
+    const created = await plan();
+    expect(created.body.installments.map((i: any) => i.anticipable)).toEqual([false, true, true]);
+  });
+
   it("returns 404 for unknown plans", async () => {
     expect((await call("GET", "/api/installment-plans/999")).status).toBe(404);
   });

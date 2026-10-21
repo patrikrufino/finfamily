@@ -2,6 +2,7 @@ import {
   Money,
   buildInstallmentSchedule,
   installmentStatusFor,
+  isAnticipable,
   isValidIsoDate,
   planProgress,
   validateAnticipation,
@@ -52,7 +53,10 @@ export function installmentsRoutes(db: AppDatabase, today: () => string) {
   }
   const detail = (plan: typeof installmentPlans.$inferSelect) => ({
     ...summary(plan),
-    installments: sorted(itemsOf(plan.id)).map(transactionDto),
+    installments: sorted(itemsOf(plan.id)).map((row) => ({
+      ...transactionDto(row),
+      anticipable: isAnticipable(toDomainTransaction(row), today()),
+    })),
   });
 
   app.get("/", (c) => {
