@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { App } from "./App";
@@ -412,5 +412,146 @@ describe("installments flow", () => {
     await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
     expect(await within(dialog).findByText("Informe uma descrição para o parcelamento.")).toBeInTheDocument();
     expect(within(dialog).getByText("Informe de 2 a 120 parcelas.")).toBeInTheDocument();
+  });
+});
+
+describe("debts flow", () => {
+  const debtSeed = () =>
+    createFakeRepository({
+      accounts: [{ name: "Conta Itaú", type: "checking", initialBalanceCents: 500000 }],
+      categories: [{ name: "Dívidas", kind: "expense" }],
+    });
+
+  async function createDebt(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(await screen.findByRole("button", { name: "Nova dívida" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByLabelText("Credor"), "Banco");
+    await user.type(within(dialog).getByLabelText("Valor original"), "1.000,00");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await user.click(await screen.findByRole("link", { name: /Banco/ }));
+    await screen.findByTestId("debt-balance");
+  }
+
+  it("registers a debt without moving any money and shows the total owed", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, debtSeed(), "/debts");
+    await user.click(await screen.findByRole("button", { name: "Nova dívida" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByLabelText("Credor"), "Banco");
+    await user.type(within(dialog).getByLabelText("Valor original"), "1.000,00");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    expect(await screen.findByRole("link", { name: /Banco/ })).toBeInTheDocument();
+    expect(nbsp(screen.getByTestId("total-owed").textContent!)).toBe("R$ 1.000,00");
+    await user.click(screen.getByRole("link", { name: "Início" }));
+    await waitFor(() => expect(nbsp(screen.getByTestId("total-balance").textContent!)).toBe("R$ 5.000,00"));
+  });
+
+  it("posts interest and a discount, then pays partially; the payment is an expense on the account", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, debtSeed(), "/debts");
+    await createDebt(user);
+
+    await user.click(screen.getByRole("button", { name: "Lançar juros" }));
+    let dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByLabelText("Valor"), "80,00");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(nbsp(screen.getByTestId("debt-balance").textContent!)).toBe("R$ 1.080,00"));
+
+    await user.click(screen.getByRole("button", { name: "Dar desconto" }));
+    dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByLabelText("Valor"), "30,00");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(nbsp(screen.getByTestId("debt-balance").textContent!)).toBe("R$ 1.050,00"));
+
+    await user.click(screen.getByRole("button", { name: "Pagar" }));
+    dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByLabelText("Valor")).toHaveValue("1.050,00");
+    const amount = within(dialog).getByLabelText("Valor");
+    await user.clear(amount);
+    await user.type(amount, "300,00");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(nbsp(screen.getByTestId("debt-balance").textContent!)).toBe("R$ 750,00"));
+
+    const items = screen.getAllByRole("listitem").map((li) => nbsp(li.textContent ?? ""));
+    expect(items.some((t) => t.includes("Pagamento") && t.includes("R$ 300,00") && t.includes("Saldo após R$ 750,00"))).toBe(true);
+
+    await user.click(screen.getByRole("link", { name: "Início" }));
+    await waitFor(() => expect(nbsp(screen.getByTestId("total-balance").textContent!)).toBe("R$ 4.700,00"));
+  });
+
+  it("settles the debt by paying the whole balance and moves it to the settled list", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, debtSeed(), "/debts");
+    await createDebt(user);
+    await user.click(screen.getByRole("button", { name: "Pagar" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Pagar o saldo todo" }));
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(screen.getAllByText(/Quitada/).length).toBeGreaterThan(0));
+    expect(screen.queryByRole("button", { name: "Pagar" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("link", { name: "Dívidas" }));
+    expect(await screen.findByRole("heading", { name: "Quitadas" })).toBeInTheDocument();
+  });
+
+  it("explains payments above the balance and in the future", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, debtSeed(), "/debts");
+    await createDebt(user);
+    await user.click(screen.getByRole("button", { name: "Pagar" }));
+    const dialog = await screen.findByRole("dialog");
+    const amount = within(dialog).getByLabelText("Valor");
+    await user.clear(amount);
+    await user.type(amount, "1.000,01");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    expect(await within(dialog).findByText("O pagamento não pode passar do saldo devedor.")).toBeInTheDocument();
+    await user.clear(amount);
+    await user.type(amount, "10,00");
+    fireEvent.change(within(dialog).getByLabelText("Data"), { target: { value: "2099-01-01" } });
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    expect(await within(dialog).findByText("A data do pagamento não pode ser futura.")).toBeInTheDocument();
+  });
+
+  it("refuses to remove interest that payments depend on and removes a payment to undo it", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, debtSeed(), "/debts");
+    await createDebt(user);
+    await user.click(screen.getByRole("button", { name: "Lançar juros" }));
+    let dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByLabelText("Valor"), "80,00");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(nbsp(screen.getByTestId("debt-balance").textContent!)).toBe("R$ 1.080,00"));
+    await user.click(screen.getByRole("button", { name: "Pagar" }));
+    dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(screen.getAllByText(/Quitada/).length).toBeGreaterThan(0));
+
+    await user.click(screen.getByRole("button", { name: /Remover Juros/ }));
+    expect(await screen.findByText(/Remover isso deixaria o saldo negativo/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Remover Pagamento/ }));
+    await waitFor(() => expect(nbsp(screen.getByTestId("debt-balance").textContent!)).toBe("R$ 1.080,00"));
+  });
+
+  it("lists the payment in the transactions screen, linked to the debt", async () => {
+    const user = userEvent.setup();
+    const repo = debtSeed();
+    await repo.createDebt({ creditor: "Banco", originalCents: 100000, categoryId: 1, personId: 1 });
+    await repo.payDebt(1, { accountId: 1, amountCents: 30000, date: new Date().toLocaleDateString("sv-SE"), personId: 1, categoryId: null });
+    renderWithProviders(<App />, repo, "/transactions");
+    const link = await screen.findByRole("link", { name: /Pagamento · Banco/ });
+    expect(link).toHaveAttribute("href", "/debts/1");
+    await user.click(link);
+    expect(await screen.findByTestId("debt-balance")).toBeInTheDocument();
+  });
+
+  it("deletes a debt without payments after confirming", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, debtSeed(), "/debts");
+    await createDebt(user);
+    await user.click(screen.getByRole("button", { name: "Excluir dívida" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Excluir" }));
+    expect(await screen.findByText("Nenhuma dívida cadastrada.")).toBeInTheDocument();
   });
 });

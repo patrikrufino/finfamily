@@ -75,10 +75,11 @@ export function TransactionsPage() {
           {vm.transactions.map((tx) => {
             const isStatementItem = tx.statementMonth !== null;
             const isPlanItem = tx.planId !== null;
+            const isDebtItem = tx.debtId !== null;
             const planTitle = tx.installmentNumber === null
               ? `${t("installments.anticipation")} · ${tx.description.replace(/^Antecipação · /, "")}`
               : `${tx.description} (${t("installments.badge", { n: tx.installmentNumber, count: planCount(tx.planId) ?? "?" })})`;
-            const title = isStatementItem ? statementTitle(tx) : isPlanItem ? planTitle : tx.adjustment ? t("transactions.adjustment") : tx.description || t(`transactions.${tx.kind}`);
+            const title = isStatementItem ? statementTitle(tx) : isPlanItem ? planTitle : isDebtItem ? tx.description : tx.adjustment ? t("transactions.adjustment") : tx.description || t(`transactions.${tx.kind}`);
             const source = tx.accountId !== null ? accountName(tx.accountId) : cardName(tx.cardId);
             const itemClass = `${card} ${css({ width: "100%", display: "flex", justifyContent: "space-between", textAlign: "left", opacity: tx.status === "scheduled" ? 0.7 : 1 })}`;
             const content = (
@@ -101,6 +102,10 @@ export function TransactionsPage() {
               <li key={tx.id}>
                 {isStatementItem ? (
                   <div className={itemClass}>{content}</div>
+                ) : isDebtItem ? (
+                  <Link to={`/debts/${tx.debtId}`} className={`${itemClass} ${css({ cursor: "pointer" })}`} aria-label={`${title} — ${t("debts.view")}`}>
+                    {content}
+                  </Link>
                 ) : isPlanItem ? (
                   <Link to={`/installments/${tx.planId}`} className={`${itemClass} ${css({ cursor: "pointer" })}`} aria-label={`${title} — ${t("installments.view")}`}>
                     {content}

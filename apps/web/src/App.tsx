@@ -8,6 +8,8 @@ import { TransactionDialog } from "./features/transactions/TransactionDialog";
 import { BudgetPage } from "./pages/BudgetPage";
 import { CardDetailPage } from "./pages/CardDetailPage";
 import { CardsPage } from "./pages/CardsPage";
+import { DebtDetailPage } from "./pages/DebtDetailPage";
+import { DebtsPage } from "./pages/DebtsPage";
 import { HomePage } from "./pages/HomePage";
 import { InstallmentsPage } from "./pages/InstallmentsPage";
 import { PlanDetailPage } from "./pages/PlanDetailPage";
@@ -36,7 +38,7 @@ export function App() {
   const [creating, setCreating] = useState(false);
 
   return (
-    <div className={css({ minHeight: "100dvh", background: "bg", color: "text", paddingBottom: "20" })}>
+    <div className={css({ minHeight: "100dvh", background: "bg", color: "text", paddingBottom: "36" })}>
       <header
         className={css({
           display: "flex",
@@ -58,9 +60,11 @@ export function App() {
           <Route path="/budget" element={<BudgetPage />} />
           <Route path="/installments" element={<InstallmentsPage />} />
           <Route path="/installments/:id" element={<PlanDetailPage />} />
+          <Route path="/debts" element={<DebtsPage />} />
+          <Route path="/debts/:id" element={<DebtDetailPage />} />
           <Route path="/cards" element={<CardsPage />} />
           <Route path="/cards/:id" element={<CardDetailPage />} />
-          {NAV_ITEMS.filter(({ key }) => key !== "home" && key !== "transactions" && key !== "budget" && key !== "cards").map(({ path, key }) => (
+          {NAV_ITEMS.filter(({ key }) => key !== "home" && key !== "transactions" && key !== "budget" && key !== "cards" && key !== "debts").map(({ path, key }) => (
             <Route key={key} path={path} element={<PlaceholderPage titleKey={`pages.${key}`} />} />
           ))}
         </Routes>
