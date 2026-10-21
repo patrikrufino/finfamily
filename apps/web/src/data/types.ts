@@ -298,6 +298,18 @@ export interface DashboardDto {
   forecast: ForecastMonthDto[];
 }
 
+export interface BackupInfoDto {
+  name: string;
+  sizeBytes: number;
+  createdAt: string;
+}
+
+export interface BackupStatusDto {
+  backups: BackupInfoDto[];
+  lastBackupAt: string | null;
+  schedule: { intervalHours: number; keep: number };
+}
+
 export type NewCategory = Pick<CategoryDto, "name" | "kind">;
 
 type CardFields = "cardId" | "statementMonth" | "feeKind" | "adjustment" | "planId" | "installmentNumber" | "debtId" | "recurringId";
@@ -346,6 +358,9 @@ export interface FinanceRepository {
   /** Without a month, returns the statement that is currently open. */
   getStatement(cardId: number, month?: string): Promise<StatementDto>;
   payStatement(cardId: number, month: string, input: StatementPaymentInput): Promise<StatementDto>;
+  /** Null when the server runs without backups configured. */
+  getBackupStatus(): Promise<BackupStatusDto | null>;
+  createBackup(): Promise<BackupInfoDto>;
   getDashboard(): Promise<DashboardDto>;
   listRecurring(): Promise<RecurringDto[]>;
   createRecurring(input: NewRecurring): Promise<RecurringDto>;

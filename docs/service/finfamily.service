@@ -1,0 +1,19 @@
+# systemd user service. Copy to ~/.config/systemd/user/finfamily.service, adjust the paths, then:
+#   systemctl --user daemon-reload && systemctl --user enable --now finfamily
+#   loginctl enable-linger "$USER"   # keeps it running without an open session
+[Unit]
+Description=FinFamily
+After=network-online.target
+
+[Service]
+WorkingDirectory=%h/finfamily
+Environment=DATABASE_PATH=%h/finfamily-data/finfamily.db
+Environment=PORT=3333
+# Environment=TLS_CERT=%h/finfamily-data/cert.pem
+# Environment=TLS_KEY=%h/finfamily-data/key.pem
+ExecStart=/usr/bin/env pnpm start
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

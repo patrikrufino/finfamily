@@ -1,6 +1,8 @@
 import {
   ApiError,
   type AccountDto,
+  type BackupInfoDto,
+  type BackupStatusDto,
   type BudgetReportDto,
   type CardDto,
   type DashboardDto,
@@ -62,6 +64,15 @@ export const httpRepository: FinanceRepository = {
   setCardRule: (cardId, rule) => request<void>(`/api/cards/${cardId}/rules`, send("POST", rule)),
   getStatement: (cardId, month) =>
     request<StatementDto>(`/api/cards/${cardId}/statement${month ? `?month=${month}` : ""}`),
+  getBackupStatus: async () => {
+    try {
+      return await request<BackupStatusDto>("/api/backup");
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 404) return null;
+      throw e;
+    }
+  },
+  createBackup: () => request<BackupInfoDto>("/api/backup", send("POST")),
   getDashboard: () => request<DashboardDto>("/api/dashboard"),
   listRecurring: () => request<RecurringDto[]>("/api/recurring"),
   createRecurring: (input) => request<RecurringDto>("/api/recurring", send("POST", input)),

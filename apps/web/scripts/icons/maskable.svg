@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="FinFamily">
+  <rect width="512" height="512" fill="#0f766e"/>
+  <!-- Artwork scaled to 68% and centered, so it stays inside the 80% safe zone of maskable icons. -->
+  <g transform="translate(256 256) scale(0.68) translate(-256 -256)">
+    <g fill="#ffffff">
+      <rect x="160" y="112" width="56" height="288" rx="10"/>
+      <rect x="160" y="112" width="200" height="56" rx="10"/>
+      <rect x="160" y="224" width="148" height="56" rx="10"/>
+    </g>
+    <circle cx="352" cy="348" r="56" fill="#fbbf24"/>
+    <circle cx="352" cy="348" r="36" fill="none" stroke="#b45309" stroke-width="10"/>
+  </g>
+</svg>

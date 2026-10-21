@@ -38,6 +38,7 @@ import {
 import {
   ApiError,
   type AccountDto,
+  type BackupInfoDto,
   type CardDto,
   type CategoryDto,
   type DashboardDto,
@@ -65,6 +66,8 @@ export function createFakeRepository(
     categories?: NewCategory[];
     cards?: NewCard[];
     recurring?: NewRecurring[];
+    /** Set to false to simulate a server without backups (the default is enabled and empty). */
+    backups?: boolean | BackupInfoDto[];
     /** Overrides parts of the computed dashboard (for scenarios the fake does not model, like card statements due). */
     dashboard?: Partial<DashboardDto>;
     /** Fixed current date (`YYYY-MM-DD`) for statement logic. */
@@ -88,6 +91,7 @@ export function createFakeRepository(
   let debtEntryRows: { id: number; debtId: number; kind: "interest" | "discount"; amountCents: number; date: string; note: string }[] = [];
   let recurringRules: RecurringRule[] = [];
   let nextRecurringId = 1;
+  const backupList: BackupInfoDto[] = Array.isArray(seed.backups) ? [...seed.backups] : [];
   let nextDebtId = 1;
   let nextEntryId = 1;
   let plans: (NewPlan & { id: number })[] = [];
@@ -274,6 +278,16 @@ export function createFakeRepository(
       if (input.interestCents > 0) transactions.push({ ...base, id: nextTransactionId++, kind: "expense", amountCents: input.interestCents, feeKind: "interest", description: "interest" });
       if (input.fineCents > 0) transactions.push({ ...base, id: nextTransactionId++, kind: "expense", amountCents: input.fineCents, feeKind: "fine", description: "fine" });
       return statementFor(cardId, month);
+    },
+    getBackupStatus: async () =>
+      seed.backups === false
+        ? null
+        : { backups: [...backupList].reverse(), lastBackupAt: backupList[backupList.length - 1]?.createdAt ?? null, schedule: { intervalHours: 24, keep: 14 } },
+    createBackup: async () => {
+      repo.calls.push("createBackup");
+      const info = { name: `finfamily-20261021-1000${String(backupList.length).padStart(2, "0")}.db`, sizeBytes: 81920, createdAt: new Date().toISOString() };
+      backupList.push(info);
+      return info;
     },
     getDashboard: async () => {
       const txs = transactions.map(toDomainTx);

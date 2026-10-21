@@ -7,6 +7,9 @@ import { cardsRoutes } from "./routes/cards";
 import { categoriesRoutes } from "./routes/categories";
 import { accountsRoutes } from "./routes/accounts";
 import { dashboardRoutes } from "./routes/dashboard";
+import { backupRoutes } from "./backup/routes";
+import type { BackupConfig } from "./backup/backup";
+import { serveWeb } from "./static";
 import { debtsRoutes } from "./routes/debts";
 import { installmentsRoutes } from "./routes/installments";
 import { postDueRecurring, recurringRoutes } from "./routes/recurring";
@@ -15,11 +18,15 @@ import { transactionsRoutes } from "./routes/transactions";
 export interface AppOptions {
   /** Current local date (`YYYY-MM-DD`); injectable so statements can be tested deterministically. */
   today?: () => string;
+  /** Enables the backup endpoints. */
+  backup?: BackupConfig;
+  /** Folder with the built web app; when set, the API also serves it (one process, one port). */
+  webDist?: string | null;
 }
 
 const localToday = () => new Date().toLocaleDateString("sv-SE");
 
-export function createApp(db: AppDatabase, { today = localToday }: AppOptions = {}) {
+export function createApp(db: AppDatabase, { today = localToday, backup, webDist }: AppOptions = {}) {
   const app = new Hono();
 
   // Installments are settled and recurring occurrences are posted once their date arrives (idempotent and cheap, so done per request).
@@ -42,6 +49,10 @@ export function createApp(db: AppDatabase, { today = localToday }: AppOptions = 
   app.route("/api/debts", debtsRoutes(db, today));
   app.route("/api/installment-plans", installmentsRoutes(db, today));
   app.route("/api/transactions", transactionsRoutes(db));
+  if (backup) app.route("/api/backup", backupRoutes(db.$client, backup));
+
+  app.all("/api/*", (c) => c.json({ errors: ["not_found"] }, 404));
+  if (webDist) app.get("*", serveWeb(webDist));
 
   return app;
 }

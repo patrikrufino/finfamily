@@ -63,3 +63,12 @@ export const PlusIcon = (p: IconProps) => (
     <path d="M12 5v14M5 12h14" />
   </Icon>
 );
+
+export const SlidersIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 6h3M11 6h9M4 12h9M17 12h3M4 18h2M10 18h10" />
+    <circle cx="9" cy="6" r="2" />
+    <circle cx="15" cy="12" r="2" />
+    <circle cx="8" cy="18" r="2" />
+  </Icon>
+);

@@ -8,7 +8,8 @@
     "budget": "Orçamento",
     "cards": "Cartões",
     "debts": "Dívidas",
-    "label": "Navegação principal"
+    "label": "Navegação principal",
+    "settings": "Ajustes"
   },
   "pages": {
     "home": "Visão geral",
@@ -153,7 +154,8 @@
     "recurring_source_required": "Escolha uma conta ou um cartão.",
     "recurring_single_source": "Escolha só uma conta ou um cartão.",
     "recurring_income_needs_account": "Receita recorrente precisa ir para uma conta.",
-    "recurring_and_installments": "Escolha parcelar ou repetir, não os dois."
+    "recurring_and_installments": "Escolha parcelar ou repetir, não os dois.",
+    "backup_failed": "Não foi possível criar o backup."
   },
   "budget": {
     "total": "Orçado",
@@ -380,5 +382,45 @@
     "expenseLabel": "Despesa",
     "active": "Ativas",
     "inactive": "Pausadas e encerradas"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "language": "Idioma",
+    "install": "Instalar o app",
+    "installAvailable": "Instale o FinFamily na tela inicial para abri-lo como um app.",
+    "installButton": "Instalar",
+    "installed": "O app já está instalado neste aparelho.",
+    "installIos": "No iPhone ou iPad: toque em Compartilhar e depois em “Adicionar à Tela de Início”.",
+    "installUnavailable": "A instalação não está disponível agora. Ela exige abrir o app por HTTPS (ou localhost) em um navegador compatível.",
+    "backups": "Backups",
+    "backupsHint": "Cópias do banco de dados feitas no computador onde o app roda.",
+    "backupNow": "Fazer backup agora",
+    "backingUp": "Fazendo backup…",
+    "lastBackup": "Último backup: {{date}}",
+    "noBackups": "Nenhum backup ainda.",
+    "schedule": "Automático a cada {{hours}} h; guarda os {{keep}} mais recentes.",
+    "scheduleOff": "Backup automático desligado; guarda os {{keep}} mais recentes.",
+    "backupsDisabled": "Os backups não estão ativos neste servidor.",
+    "backupDone": "Backup criado.",
+    "about": "Sobre",
+    "version": "Versão {{version}}",
+    "languages": {
+      "pt-BR": "Português (Brasil)",
+      "en": "English"
+    }
+  },
+  "offline": {
+    "banner": "Sem conexão com o servidor. Confira se o computador de casa está ligado e se você está na mesma rede.",
+    "retry": "Tentar de novo"
+  },
+  "notFound": {
+    "title": "Página não encontrada",
+    "back": "Voltar ao início"
+  },
+  "crash": {
+    "title": "Algo deu errado",
+    "message": "Ocorreu um erro inesperado. Seus dados não foram afetados.",
+    "reload": "Recarregar",
+    "home": "Ir para o início"
   }
 }
