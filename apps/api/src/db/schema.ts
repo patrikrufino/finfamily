@@ -80,6 +80,22 @@ export const debtEntries = sqliteTable("debt_entries", {
   note: text("note").notNull().default(""),
 });
 
+export const recurringRules = sqliteTable("recurring_rules", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  kind: text("kind", { enum: ["income", "expense"] }).notNull(),
+  amountCents: integer("amount_cents").notNull(),
+  description: text("description").notNull().default(""),
+  accountId: integer("account_id").references(() => accounts.id),
+  cardId: integer("card_id").references(() => cards.id),
+  categoryId: integer("category_id").references(() => categories.id),
+  personId: integer("person_id").notNull().references(() => people.id),
+  frequency: text("frequency", { enum: ["weekly", "monthly", "yearly"] }).notNull(),
+  startDate: text("start_date").notNull(),
+  endDate: text("end_date"),
+  nextIndex: integer("next_index").notNull().default(0),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+});
+
 export const transactions = sqliteTable("transactions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   kind: text("kind", { enum: ["income", "expense", "transfer"] }).notNull(),
@@ -95,6 +111,7 @@ export const transactions = sqliteTable("transactions", {
   planId: integer("plan_id").references(() => installmentPlans.id),
   installmentNumber: integer("installment_number"),
   debtId: integer("debt_id").references(() => debts.id),
+  recurringId: integer("recurring_id").references(() => recurringRules.id),
   description: text("description").notNull().default(""),
   status: text("status", { enum: ["settled", "scheduled"] }).notNull().default("settled"),
   personId: integer("person_id").notNull().references(() => people.id),

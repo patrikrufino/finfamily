@@ -30,48 +30,53 @@ export function budgetRoutes(db: AppDatabase) {
     const month = c.req.query("month") ?? "";
     if (!monthSchema.safeParse(month).success) return c.json({ errors: ["invalid_month"] }, 422);
 
-    const entries = db.select().from(budgets).all().map((b) => ({
-      categoryId: b.categoryId, fromMonth: b.fromMonth, amount: Money.fromCents(b.amountCents),
-    }));
-    const expenses = db.select().from(transactions)
-      .where(and(like(transactions.date, `${month}-%`), eq(transactions.kind, "expense"), eq(transactions.adjustment, false)))
-      .all();
-
-    const sumFor = (categoryId: number | null, status: "settled" | "scheduled") =>
-      expenses.filter((t) => t.categoryId === categoryId && t.status === status).reduce((s, t) => s + t.amountCents, 0);
-
-    const rows = db.select().from(categories).orderBy(categories.name).all().flatMap((cat) => {
-      const spent = sumFor(cat.id, "settled");
-      const committed = sumFor(cat.id, "scheduled");
-      if (cat.archived && spent === 0 && committed === 0) return [];
-      const p = budgetProgress(budgetForMonth(entries, cat.id, month), Money.fromCents(spent), Money.fromCents(committed));
-      return [{
-        categoryId: cat.id,
-        name: cat.name,
-        kind: cat.kind,
-        archived: cat.archived,
-        budgetCents: p.budget.cents,
-        spentCents: p.spent.cents,
-        committedCents: p.committed.cents,
-        remainingCents: p.remaining.cents,
-        availableAfterCommittedCents: p.availableAfterCommitted.cents,
-        ratio: p.ratio,
-        status: p.status,
-      }];
-    });
-
-    const budgeted = rows.filter((r) => r.budgetCents > 0);
-    return c.json({
-      month,
-      categories: rows,
-      uncategorized: { spentCents: sumFor(null, "settled"), committedCents: sumFor(null, "scheduled") },
-      totals: {
-        budgetCents: budgeted.reduce((s, r) => s + r.budgetCents, 0),
-        spentCents: budgeted.reduce((s, r) => s + r.spentCents, 0),
-        remainingCents: budgeted.reduce((s, r) => s + r.remainingCents, 0),
-      },
-    });
+    return c.json(budgetReport(db, month));
   });
 
   return app;
+}
+
+/** Budget vs spending of a month, per category, plus uncategorized spending and totals. */
+export function budgetReport(db: AppDatabase, month: string) {
+  const entries = db.select().from(budgets).all().map((b) => ({
+    categoryId: b.categoryId, fromMonth: b.fromMonth, amount: Money.fromCents(b.amountCents),
+  }));
+  const expenses = db.select().from(transactions)
+    .where(and(like(transactions.date, `${month}-%`), eq(transactions.kind, "expense"), eq(transactions.adjustment, false)))
+    .all();
+
+  const sumFor = (categoryId: number | null, status: "settled" | "scheduled") =>
+    expenses.filter((t) => t.categoryId === categoryId && t.status === status).reduce((s, t) => s + t.amountCents, 0);
+
+  const rows = db.select().from(categories).orderBy(categories.name).all().flatMap((cat) => {
+    const spent = sumFor(cat.id, "settled");
+    const committed = sumFor(cat.id, "scheduled");
+    if (cat.archived && spent === 0 && committed === 0) return [];
+    const p = budgetProgress(budgetForMonth(entries, cat.id, month), Money.fromCents(spent), Money.fromCents(committed));
+    return [{
+      categoryId: cat.id,
+      name: cat.name,
+      kind: cat.kind,
+      archived: cat.archived,
+      budgetCents: p.budget.cents,
+      spentCents: p.spent.cents,
+      committedCents: p.committed.cents,
+      remainingCents: p.remaining.cents,
+      availableAfterCommittedCents: p.availableAfterCommitted.cents,
+      ratio: p.ratio,
+      status: p.status,
+    }];
+  });
+
+  const budgeted = rows.filter((r) => r.budgetCents > 0);
+  return {
+  month,
+    categories: rows,
+    uncategorized: { spentCents: sumFor(null, "settled"), committedCents: sumFor(null, "scheduled") },
+    totals: {
+      budgetCents: budgeted.reduce((s, r) => s + r.budgetCents, 0),
+      spentCents: budgeted.reduce((s, r) => s + r.spentCents, 0),
+      remainingCents: budgeted.reduce((s, r) => s + r.remainingCents, 0),
+    },
+  };
 }
