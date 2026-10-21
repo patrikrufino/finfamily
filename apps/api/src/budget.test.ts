@@ -24,7 +24,7 @@ beforeEach(async () => {
   app = createApp(createDatabase(":memory:"));
   accountId = (await post("/api/accounts", { name: "Checking", type: "checking" })).id;
   food = (await post("/api/categories", { name: "Food", kind: "expense" })).id;
-  salary = (await post("/api/categories", { name: "Salary", kind: "both" })).id;
+  salary = (await post("/api/categories", { name: "Salary", kind: "income", icon: "💼" })).id;
 });
 
 describe("budget API", () => {
@@ -69,11 +69,26 @@ describe("budget API", () => {
     expect(b.totals).toMatchObject({ budgetCents: 50000, spentCents: 10000, remainingCents: 40000 });
   });
 
-  it("does not count income or transfers as spending", async () => {
+  it("does not list income categories and does not count income as spending", async () => {
     await post("/api/transactions", {
       kind: "income", amountCents: 100000, date: "2026-10-05", accountId, categoryId: salary, personId: 1,
     });
-    expect(row(await budget(), salary).spentCents).toBe(0);
+    const b = await budget();
+    expect(row(b, salary)).toBeUndefined();
+    expect(b.categories.map((c: any) => c.name)).toEqual(["Food"]);
+    expect(b.uncategorized).toEqual({ spentCents: 0, committedCents: 0 });
+  });
+
+  it("only allows budgets on expense categories", async () => {
+    const res = await app.request(`/api/budgets/${salary}`, json("PUT", { month: "2026-10", amountCents: 1000 }));
+    expect(res.status).toBe(422);
+    expect(((await res.json()) as any).errors).toContain("budget_only_for_expense");
+  });
+
+  it("returns the category icon with the report", async () => {
+    await post("/api/categories", { name: "Pets", kind: "expense", icon: "🐶" });
+    const pets = (await budget()).categories.find((c: any) => c.name === "Pets");
+    expect(pets.icon).toBe("🐶");
   });
 
   it("validates input", async () => {

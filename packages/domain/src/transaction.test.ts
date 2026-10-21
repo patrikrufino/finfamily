@@ -41,8 +41,8 @@ describe("validateTransactionInput", () => {
 });
 
 describe("validateTransactionCategory", () => {
-  const food = { id: 1, name: "Food", kind: "expense" as const, archived: false };
-  const salary = { id: 2, name: "Salary", kind: "both" as const, archived: false };
+  const food = { id: 1, name: "Food", kind: "expense" as const, icon: null, archived: false };
+  const salary = { id: 2, name: "Salary", kind: "income" as const, icon: null, archived: false };
 
   it("accepts no category for income and expenses", () => {
     expect(validateTransactionCategory("expense", null)).toEqual([]);

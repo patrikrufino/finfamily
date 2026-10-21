@@ -16,9 +16,9 @@ export function budgetRoutes(db: AppDatabase) {
     const categoryId = Number(c.req.param("categoryId"));
     const parsed = putSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ errors: ["invalid_budget"] }, 422);
-    if (!db.select().from(categories).where(eq(categories.id, categoryId)).get()) {
-      return c.json({ errors: ["category_not_found"] }, 404);
-    }
+    const category = db.select().from(categories).where(eq(categories.id, categoryId)).get();
+    if (!category) return c.json({ errors: ["category_not_found"] }, 404);
+    if (category.kind !== "expense") return c.json({ errors: ["budget_only_for_expense"] }, 422);
     const { month, amountCents } = parsed.data;
     const row = db.insert(budgets).values({ categoryId, fromMonth: month, amountCents })
       .onConflictDoUpdate({ target: [budgets.categoryId, budgets.fromMonth], set: { amountCents } })
@@ -48,7 +48,7 @@ export function budgetReport(db: AppDatabase, month: string) {
   const sumFor = (categoryId: number | null, status: "settled" | "scheduled") =>
     expenses.filter((t) => t.categoryId === categoryId && t.status === status).reduce((s, t) => s + t.amountCents, 0);
 
-  const rows = db.select().from(categories).orderBy(categories.name).all().flatMap((cat) => {
+  const rows = db.select().from(categories).where(eq(categories.kind, "expense")).orderBy(categories.name).all().flatMap((cat) => {
     const spent = sumFor(cat.id, "settled");
     const committed = sumFor(cat.id, "scheduled");
     if (cat.archived && spent === 0 && committed === 0) return [];
@@ -57,6 +57,7 @@ export function budgetReport(db: AppDatabase, month: string) {
       categoryId: cat.id,
       name: cat.name,
       kind: cat.kind,
+      icon: cat.icon,
       archived: cat.archived,
       budgetCents: p.budget.cents,
       spentCents: p.spent.cents,

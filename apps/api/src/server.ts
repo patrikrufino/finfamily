@@ -7,6 +7,7 @@ import { createApp } from "./app";
 import { startBackupSchedule } from "./backup/backup";
 import { loadConfig, loadTlsOptions } from "./config";
 import { createDatabase } from "./db/client";
+import { seedDefaultCategories } from "./routes/categories";
 
 const config = loadConfig(process.env, dirname(fileURLToPath(import.meta.url)) + "/..");
 const tls = loadTlsOptions(process.env);
