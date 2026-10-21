@@ -14,6 +14,7 @@ import { DebtsPage } from "./pages/DebtsPage";
 import { HomePage } from "./pages/HomePage";
 import { InstallmentsPage } from "./pages/InstallmentsPage";
 import { PlanDetailPage } from "./pages/PlanDetailPage";
+import { RecurringPage } from "./pages/RecurringPage";
 import { TransactionsPage } from "./pages/TransactionsPage";
 import { PlusIcon } from "./shared/icons";
 
@@ -42,6 +43,7 @@ export function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/transactions" element={<TransactionsPage />} />
           <Route path="/budget" element={<BudgetPage />} />
+          <Route path="/recurring" element={<RecurringPage />} />
           <Route path="/installments" element={<InstallmentsPage />} />
           <Route path="/installments/:id" element={<PlanDetailPage />} />
           <Route path="/debts" element={<DebtsPage />} />

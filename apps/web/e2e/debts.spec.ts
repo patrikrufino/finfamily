@@ -10,7 +10,7 @@ test("registers a debt, posts interest and pays part of it from an account", asy
   const row = page.getByRole("listitem").filter({ hasText: "Conta Dividas" });
   await expect(row).toContainText("1.000,00");
 
-  await page.getByRole("link", { name: "Dívidas" }).click();
+  await page.getByRole("navigation", { name: "Navegação principal" }).getByRole("link", { name: "Dívidas" }).click();
   await page.getByRole("button", { name: "Nova dívida" }).click();
   dialog = page.getByRole("dialog");
   await dialog.getByLabel("Credor").fill("Financiamento");

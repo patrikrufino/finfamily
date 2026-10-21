@@ -1,8 +1,10 @@
 import {
   categoryAllows,
+  validateRecurring,
   Money,
   validateInstallmentPlan,
   type InstallmentError,
+  type RecurringError,
   validateTransactionCategory,
   validateTransactionInput,
   type TransactionError,
@@ -10,6 +12,7 @@ import {
 } from "@finfamily/domain";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import type { Frequency } from "../../data/types";
 import { useRepository } from "../../data/RepositoryContext";
 import type { NewTransaction, TransactionDto } from "../../data/types";
 import { useLocale } from "../../shared/useLocale";
@@ -28,11 +31,13 @@ export interface TransactionFormValues {
   settled: boolean;
   /** Number of installments typed by the user; empty means a single payment. */
   installmentsText: string;
+  /** Repeat the transaction on a schedule; `none` is a one-off. */
+  repeat: "none" | Frequency;
 }
 
 export type PaymentSource = { type: "account" | "card"; id: number };
 
-export type FormError = TransactionError | InstallmentError | "invalid_amount" | "account_required" | "person_unknown" | "description_required";
+export type FormError = TransactionError | InstallmentError | "invalid_amount" | "account_required" | "person_unknown" | "description_required" | "recurring_and_installments" | RecurringError;
 
 interface Options {
   transaction?: TransactionDto;
@@ -75,6 +80,7 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
         description: transaction.description,
         settled: transaction.status === "settled",
         installmentsText: "",
+        repeat: "none",
       }
     : {
         kind: "expense",
@@ -87,6 +93,7 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
         description: "",
         settled: true,
         installmentsText: "",
+        repeat: "none",
       };
   const merged: TransactionFormValues = { ...base, ...edited };
   const categories = allCategories.filter((c) => categoryAllows(c, merged.kind));
@@ -95,12 +102,24 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
   // Only expenses can be charged to a card; any other kind goes back to an account.
   const cardId = merged.kind === "expense" ? merged.cardId : null;
   const accountId = cardId !== null ? null : (merged.accountId ?? accounts[0]?.id ?? null);
-  const values: TransactionFormValues = { ...merged, categoryId, cardId, accountId };
+  // Only new income/expenses can repeat; anything else (a transfer, an edit) is a one-off.
+  const canRepeat = !transaction && (merged.kind === "income" || merged.kind === "expense");
+  const repeat = canRepeat ? merged.repeat : "none";
+  const values: TransactionFormValues = { ...merged, categoryId, cardId, accountId, repeat };
+
+  const saveRecurring = useMutation({
+    mutationFn: repository.createRecurring,
+    onSuccess: () => {
+      for (const key of ["recurring", "transactions", "accounts", "budget", "cards", "dashboard"]) {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      }
+    },
+  });
 
   const savePlan = useMutation({
     mutationFn: repository.createPlan,
     onSuccess: () => {
-      for (const key of ["plans", "transactions", "accounts", "budget", "cards", "statement"]) {
+      for (const key of ["plans", "transactions", "accounts", "budget", "cards", "statement", "dashboard"]) {
         queryClient.invalidateQueries({ queryKey: [key] });
       }
     },
@@ -127,6 +146,7 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
       queryClient.invalidateQueries({ queryKey: ["budget"] });
       queryClient.invalidateQueries({ queryKey: ["cards"] });
       queryClient.invalidateQueries({ queryKey: ["statement"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 
@@ -161,7 +181,38 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
     return false;
   }
 
+  async function submitRecurring(): Promise<boolean> {
+    const found: FormError[] = [];
+    const amount = Money.parse(values.amountText, locale);
+    const personId = people.find((p) => p.name.toLowerCase() === person)?.id;
+    if (!amount) found.push("invalid_amount");
+    if (personId === undefined) found.push("person_unknown");
+    if (values.repeat !== "none" && amount && personId !== undefined) {
+      const kind = values.kind === "income" ? "income" : "expense";
+      found.push(...validateRecurring({
+        kind, amount, frequency: values.repeat, startDate: values.date, endDate: null, accountId: values.accountId, cardId: values.cardId,
+      }));
+      if (found.length === 0) {
+        await saveRecurring.mutateAsync({
+          kind, amountCents: amount.cents, description: values.description.trim(), accountId: values.accountId, cardId: values.cardId,
+          categoryId: values.categoryId, personId, frequency: values.repeat, startDate: values.date, endDate: null,
+        });
+        setErrors([]);
+        return true;
+      }
+    }
+    setErrors(found);
+    return false;
+  }
+
   async function submit(): Promise<boolean> {
+    if (values.repeat !== "none") {
+      if (values.installmentsText.trim() !== "") {
+        setErrors(["recurring_and_installments"]);
+        return false;
+      }
+      return submitRecurring();
+    }
     if (canSplitInInstallments && values.installmentsText.trim() !== "") return submitPlan();
     const found: FormError[] = [];
     const amount = Money.parse(values.amountText, locale);
@@ -204,7 +255,7 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
 
   return {
     values, setField, setSource, errors, submit, accounts, cards, categories,
-    canSplitInInstallments, installmentPreview,
-    isSaving: save.isPending || savePlan.isPending,
+    canSplitInInstallments, canRepeat, installmentPreview,
+    isSaving: save.isPending || savePlan.isPending || saveRecurring.isPending,
   };
 }

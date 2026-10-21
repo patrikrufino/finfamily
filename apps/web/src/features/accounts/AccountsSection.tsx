@@ -8,7 +8,20 @@ import { AccountDialog } from "./AccountDialog";
 import { AccountEditDialog } from "./AccountEditDialog";
 import { useAccountsViewModel } from "./useAccountsViewModel";
 
-export function AccountsSection() {
+/** Total settled balance and the projection that includes scheduled items. */
+export function TotalBalanceCard({ vm }: { vm: ReturnType<typeof useAccountsViewModel> }) {
+  const { t } = useTranslation();
+  return (
+    <div className={card}>
+      <p className={css({ color: "muted", fontSize: "sm" })}>{t("accounts.total")}</p>
+      <p data-testid="total-balance" className={css({ fontSize: "3xl", fontWeight: "bold" })}>
+          <MoneyText cents={vm.totalBalanceCents} />
+        </p>
+    </div>
+  );
+}
+
+export function AccountsSection({ showTotal = true }: { showTotal?: boolean }) {
   const { t } = useTranslation();
   const vm = useAccountsViewModel();
   const [creating, setCreating] = useState(false);
@@ -16,15 +29,7 @@ export function AccountsSection() {
 
   return (
     <section aria-labelledby="accounts-title" className={css({ display: "grid", gap: "4" })}>
-      <div className={card}>
-        <p className={css({ color: "muted", fontSize: "sm" })}>{t("accounts.total")}</p>
-        <p data-testid="total-balance" className={css({ fontSize: "3xl", fontWeight: "bold" })}>
-          <MoneyText cents={vm.totalBalanceCents} />
-        </p>
-        <p className={css({ color: "muted", fontSize: "sm" })}>
-          {t("accounts.projected")}: <MoneyText cents={vm.totalProjectedCents} />
-        </p>
-      </div>
+      {showTotal && <TotalBalanceCard vm={vm} />}
 
       <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center" })}>
         <h2 id="accounts-title" className={css({ fontSize: "lg", fontWeight: "bold" })}>{t("accounts.title")}</h2>

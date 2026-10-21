@@ -1,4 +1,4 @@
-import { Money, TRANSACTION_KINDS } from "@finfamily/domain";
+import { FREQUENCIES, Money, TRANSACTION_KINDS } from "@finfamily/domain";
 import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { css } from "../../../styled-system/css";
@@ -109,7 +109,17 @@ function TransactionForm({ transaction, onClose, onDelete }: Pick<Props, "transa
         <label htmlFor="tx-description" className={label}>{t("transactions.description")}</label>
         <input id="tx-description" className={field} value={values.description} onChange={(e) => vm.setField("description", e.target.value)} />
       </div>
-      {vm.canSplitInInstallments && (
+      {vm.canRepeat && !vm.installmentPreview && values.installmentsText.trim() === "" && (
+        <div>
+          <label htmlFor="tx-repeat" className={label}>{t("recurring.repeat")}</label>
+          <select id="tx-repeat" className={field} value={values.repeat} onChange={(e) => vm.setField("repeat", e.target.value as typeof values.repeat)}>
+            <option value="none">{t("recurring.none")}</option>
+            {FREQUENCIES.map((f) => <option key={f} value={f}>{t(`recurring.frequency.${f}`)}</option>)}
+          </select>
+          {values.repeat !== "none" && <p className={css({ color: "muted", fontSize: "xs", marginTop: "1" })}>{t("recurring.repeatHint")}</p>}
+        </div>
+      )}
+      {vm.canSplitInInstallments && values.repeat === "none" && (
         <div>
           <label htmlFor="tx-installments" className={label}>{t("installments.count")}</label>
           <input id="tx-installments" className={field} inputMode="numeric" placeholder="1" value={values.installmentsText} onChange={(e) => vm.setField("installmentsText", e.target.value)} />
@@ -122,7 +132,7 @@ function TransactionForm({ transaction, onClose, onDelete }: Pick<Props, "transa
           </p>
         </div>
       )}
-      {!vm.installmentPreview && (
+      {!vm.installmentPreview && values.repeat === "none" && (
         <label className={css({ display: "flex", alignItems: "center", gap: "2" })}>
           <input type="checkbox" checked={values.settled} onChange={(e) => vm.setField("settled", e.target.checked)} />
           {t("transactions.settled")}

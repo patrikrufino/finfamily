@@ -91,7 +91,8 @@
     "category": "Categoria",
     "noCategory": "Sem categoria",
     "accountOrCard": "Conta ou cartão",
-    "adjustment": "Ajuste de saldo"
+    "adjustment": "Ajuste de saldo",
+    "recurring": "Recorrente"
   },
   "errors": {
     "invalid_amount": "Informe um valor válido.",
@@ -144,7 +145,15 @@
     "discount_above_balance": "O desconto não pode passar do saldo devedor.",
     "balance_would_be_negative": "Remover isso deixaria o saldo negativo: há pagamentos que dependem dele.",
     "debt_has_payments": "A dívida tem pagamentos e não pode ser excluída.",
-    "entry_not_found": "Lançamento não encontrado."
+    "entry_not_found": "Lançamento não encontrado.",
+    "rule_not_found": "Recorrência não encontrada.",
+    "rule_has_postings": "Essa recorrência já lançou itens; pause em vez de excluir.",
+    "invalid_recurring": "Dados da recorrência inválidos.",
+    "end_before_start": "O fim não pode ser antes do começo.",
+    "recurring_source_required": "Escolha uma conta ou um cartão.",
+    "recurring_single_source": "Escolha só uma conta ou um cartão.",
+    "recurring_income_needs_account": "Receita recorrente precisa ir para uma conta.",
+    "recurring_and_installments": "Escolha parcelar ou repetir, não os dois."
   },
   "budget": {
     "total": "Orçado",
@@ -302,5 +311,74 @@
     "hintDiscount": "O desconto reduz o saldo sem movimentar dinheiro.",
     "hintPay": "Gera uma despesa na conta escolhida e baixa o saldo.",
     "view": "Ver dívida"
+  },
+  "dashboard": {
+    "month": "Este mês",
+    "income": "Receitas",
+    "expenses": "Despesas",
+    "result": "Resultado",
+    "budgetTitle": "Orçamento do mês",
+    "budgetUsed": "{{percent}}% do orçamento usado",
+    "budgetOf": "{{spent}} de {{budget}}",
+    "noBudget": "Defina orçamentos na aba Orçamento para acompanhar aqui.",
+    "attention": "Atenção",
+    "near": "Perto do limite",
+    "over": "Estourado",
+    "left": "Restam {{amount}}",
+    "exceeded": "Estourou em {{amount}}",
+    "dueTitle": "Faturas a vencer",
+    "dueOn": "Vence {{date}}",
+    "overdue": "Vencida",
+    "nothingDue": "Nenhuma fatura a vencer nos próximos 30 dias.",
+    "commitments": "Compromissos",
+    "installmentsMonth": "Parcelas ainda a pagar neste mês",
+    "plans": "{{count}} parcelamento ativo",
+    "plans_other": "{{count}} parcelamentos ativos",
+    "debtsOwed": "Dívidas em aberto",
+    "debtsCount": "{{count}} dívida",
+    "debtsCount_other": "{{count}} dívidas",
+    "forecastTitle": "Previsão",
+    "forecastNote": "Considera lançamentos previstos, parcelas, recorrentes e faturas no dia do vencimento.",
+    "fIncome": "Entradas",
+    "fExpenses": "Saídas",
+    "fCards": "Cartões",
+    "endBalance": "Saldo previsto",
+    "currentMonth": "restante do mês",
+    "negativeWarning": "O saldo previsto fica negativo em {{month}}.",
+    "projectedEnd": "Previsto para o fim do mês",
+    "overdueSince": "Vencida desde {{date}}"
+  },
+  "recurring": {
+    "title": "Recorrentes",
+    "empty": "Nenhuma recorrência ainda. Use \"Repetir\" ao criar um lançamento.",
+    "repeat": "Repetir",
+    "none": "Não repetir",
+    "frequency": {
+      "weekly": "Toda semana",
+      "monthly": "Todo mês",
+      "yearly": "Todo ano"
+    },
+    "repeatHint": "Começa na data informada e lança sozinho a cada ocorrência.",
+    "next": "Próximo: {{date}}",
+    "posted": "{{count}} lançados",
+    "status": {
+      "active": "Ativa",
+      "paused": "Pausada",
+      "ended": "Encerrada"
+    },
+    "pause": "Pausar",
+    "resume": "Retomar",
+    "edit": "Editar recorrência",
+    "delete": "Excluir",
+    "endDate": "Termina em (opcional)",
+    "editHint": "A mudança vale para os próximos lançamentos; o que já foi lançado não muda.",
+    "back": "Voltar",
+    "amount": "Valor",
+    "description": "Descrição",
+    "badge": "Recorrente",
+    "incomeLabel": "Receita",
+    "expenseLabel": "Despesa",
+    "active": "Ativas",
+    "inactive": "Pausadas e encerradas"
   }
 }
