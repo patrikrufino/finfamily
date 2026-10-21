@@ -1,6 +1,7 @@
 import {
   ALWAYS_FROM,
   accountBalance,
+  balanceAdjustment,
   budgetForMonth,
   budgetProgress,
   buildStatement,
@@ -65,7 +66,7 @@ export function createFakeRepository(
   };
 
   const withDefaults = (input: NewTransaction, id: number): TransactionDto => ({
-    cardId: null, statementMonth: null, feeKind: null, ...input, id,
+    cardId: null, statementMonth: null, feeKind: null, adjustment: false, ...input, id,
   });
   const toDomainTx = (t: TransactionDto): Transaction => ({ ...t, amount: Money.fromCents(t.amountCents) });
   const domainCard = (c: (typeof cardRows)[number]) => ({ id: c.id, name: c.name, limit: Money.fromCents(c.limitCents), archived: c.archived });
@@ -97,6 +98,20 @@ export function createFakeRepository(
   const repo: FinanceRepository & { calls: string[] } = {
     calls: [],
     listPeople: async () => people,
+    adjustAccount: async (id, input) => {
+      repo.calls.push("adjustAccount");
+      const account = accounts.find((a) => a.id === id)!;
+      const current = Money.fromCents(toAccountDto(account).balanceCents);
+      const adjustment = balanceAdjustment(current, Money.fromCents(input.targetBalanceCents));
+      if (!adjustment) throw new ApiError(422, ["no_adjustment_needed"]);
+      const created = withDefaults({
+        kind: adjustment.kind, amountCents: adjustment.amount.cents, date: input.date ?? today(), accountId: id,
+        toAccountId: null, categoryId: null, description: "Ajuste de saldo", status: "settled", personId: input.personId,
+        adjustment: true,
+      }, nextTransactionId++);
+      transactions.push(created);
+      return created;
+    },
     listAccounts: async () => accounts.filter((a) => !a.archived).map(toAccountDto),
     createAccount: async (input) => {
       repo.calls.push("createAccount");
@@ -161,7 +176,7 @@ export function createFakeRepository(
       if (statementFor(cardId, month).totalCents <= 0) throw new ApiError(422, ["statement_empty"]);
       const base = {
         date: input.date, accountId: input.accountId, toAccountId: null, categoryId: null, cardId, statementMonth: month,
-        status: "settled" as const, personId: input.personId,
+        status: "settled" as const, personId: input.personId, adjustment: false,
       };
       transactions.push({ ...base, id: nextTransactionId++, kind: "transfer", amountCents: input.amountCents, feeKind: null, description: `${card.name} ${month}` });
       if (input.interestCents > 0) transactions.push({ ...base, id: nextTransactionId++, kind: "expense", amountCents: input.interestCents, feeKind: "interest", description: "interest" });

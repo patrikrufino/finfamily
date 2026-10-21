@@ -53,7 +53,20 @@
       "savings": "Poupança",
       "wallet": "Carteira",
       "investment": "Investimento"
-    }
+    },
+    "edit": "Editar",
+    "editTitle": "Editar conta",
+    "initialHint": "Corrige o saldo de partida. O saldo atual muda na hora, sem criar lançamento.",
+    "adjust": {
+      "title": "Ajustar saldo",
+      "hint": "Informe o saldo que aparece no banco hoje. A diferença vira um lançamento de ajuste, que não conta como gasto nem receita.",
+      "target": "Saldo real hoje",
+      "button": "Ajustar saldo",
+      "income": "Será lançada uma receita de ajuste de {{amount}}.",
+      "expense": "Será lançada uma despesa de ajuste de {{amount}}.",
+      "none": "O saldo já confere."
+    },
+    "current": "Saldo atual"
   },
   "transactions": {
     "new": "Novo lançamento",
@@ -78,7 +91,8 @@
     "expenseTotal": "Despesas",
     "category": "Categoria",
     "noCategory": "Sem categoria",
-    "accountOrCard": "Conta ou cartão"
+    "accountOrCard": "Conta ou cartão",
+    "adjustment": "Ajuste de saldo"
   },
   "errors": {
     "invalid_amount": "Informe um valor válido.",
@@ -108,7 +122,9 @@
     "card_purchase_must_be_expense": "No cartão só cabem despesas.",
     "transfer_single_destination": "Escolha só uma conta de destino.",
     "statement_month_required": "Informe a fatura.",
-    "fee_needs_statement": "Juros e multa precisam de uma fatura."
+    "fee_needs_statement": "Juros e multa precisam de uma fatura.",
+    "no_adjustment_needed": "O saldo já confere; nada a ajustar.",
+    "invalid_adjustment": "Dados do ajuste inválidos."
   },
   "budget": {
     "total": "Orçado",

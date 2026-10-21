@@ -32,6 +32,7 @@ export const httpRepository: FinanceRepository = {
   listAccounts: () => request<AccountDto[]>("/api/accounts"),
   createAccount: (input) => request<AccountDto>("/api/accounts", send("POST", input)),
   updateAccount: (id, patch) => request<AccountDto>(`/api/accounts/${id}`, send("PATCH", patch)),
+  adjustAccount: (id, input) => request<TransactionDto>(`/api/accounts/${id}/adjust`, send("POST", input)),
   listTransactions: ({ month, accountId, personId, categoryId, cardId }) => {
     const qs = new URLSearchParams({ month });
     if (accountId) qs.set("accountId", String(accountId));

@@ -34,6 +34,8 @@ export interface TransactionDto {
   cardId: number | null;
   statementMonth: string | null;
   feeKind: "interest" | "fine" | null;
+  /** Balance adjustment: not spending or earning. */
+  adjustment: boolean;
   description: string;
   status: TransactionStatus;
   personId: number;
@@ -122,7 +124,7 @@ export interface StatementPaymentInput {
 
 export type NewCategory = Pick<CategoryDto, "name" | "kind">;
 
-type CardFields = "cardId" | "statementMonth" | "feeKind";
+type CardFields = "cardId" | "statementMonth" | "feeKind" | "adjustment";
 /** Card-related fields default to null when omitted. */
 export type NewTransaction = Omit<TransactionDto, "id" | CardFields> & Partial<Pick<TransactionDto, CardFields>>;
 export type NewAccount = Pick<AccountDto, "name" | "type" | "initialBalanceCents">;
@@ -149,7 +151,9 @@ export interface FinanceRepository {
   listPeople(): Promise<PersonDto[]>;
   listAccounts(): Promise<AccountDto[]>;
   createAccount(input: NewAccount): Promise<AccountDto>;
-  updateAccount(id: number, patch: Partial<Pick<AccountDto, "name" | "archived">>): Promise<AccountDto>;
+  updateAccount(id: number, patch: Partial<Pick<AccountDto, "name" | "archived" | "initialBalanceCents">>): Promise<AccountDto>;
+  /** Records the difference to `targetBalanceCents` as an adjustment transaction. */
+  adjustAccount(id: number, input: { targetBalanceCents: number; personId: number; date?: string }): Promise<TransactionDto>;
   listTransactions(filter: TransactionFilter): Promise<TransactionDto[]>;
   createTransaction(input: NewTransaction): Promise<TransactionDto>;
   updateTransaction(id: number, input: NewTransaction): Promise<TransactionDto>;

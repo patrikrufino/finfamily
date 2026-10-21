@@ -53,7 +53,20 @@
       "savings": "Savings",
       "wallet": "Wallet",
       "investment": "Investment"
-    }
+    },
+    "edit": "Edit",
+    "editTitle": "Edit account",
+    "initialHint": "Corrects the starting balance. The current balance changes right away, without creating a transaction.",
+    "adjust": {
+      "title": "Adjust balance",
+      "hint": "Enter the balance the bank shows today. The difference becomes an adjustment transaction, which is not counted as spending or income.",
+      "target": "Real balance today",
+      "button": "Adjust balance",
+      "income": "An adjustment income of {{amount}} will be recorded.",
+      "expense": "An adjustment expense of {{amount}} will be recorded.",
+      "none": "The balance already matches."
+    },
+    "current": "Current balance"
   },
   "transactions": {
     "new": "New transaction",
@@ -78,7 +91,8 @@
     "expenseTotal": "Expenses",
     "category": "Category",
     "noCategory": "No category",
-    "accountOrCard": "Account or card"
+    "accountOrCard": "Account or card",
+    "adjustment": "Balance adjustment"
   },
   "errors": {
     "invalid_amount": "Enter a valid amount.",
@@ -108,7 +122,9 @@
     "card_purchase_must_be_expense": "Only expenses can be charged to a card.",
     "transfer_single_destination": "Choose a single destination.",
     "statement_month_required": "Enter the statement.",
-    "fee_needs_statement": "Interest and fines need a statement."
+    "fee_needs_statement": "Interest and fines need a statement.",
+    "no_adjustment_needed": "The balance already matches; nothing to adjust.",
+    "invalid_adjustment": "Invalid adjustment data."
   },
   "budget": {
     "total": "Budgeted",

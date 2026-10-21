@@ -233,3 +233,46 @@ describe("credit card flow", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 });
+
+describe("account initial balance and adjustments", () => {
+  it("edits the initial balance and the balance follows", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, seeded());
+    await waitFor(() => expect(nbsp(screen.getByTestId("total-balance").textContent!)).toBe("R$ 1.000,00"));
+    await user.click(screen.getByRole("button", { name: "Editar Conta Itaú" }));
+    const dialog = await screen.findByRole("dialog");
+    const initial = within(dialog).getByLabelText("Saldo inicial");
+    await user.clear(initial);
+    await user.type(initial, "1.500,00");
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(nbsp(screen.getByTestId("total-balance").textContent!)).toBe("R$ 1.500,00"));
+  });
+
+  it("previews and records a balance adjustment that is not counted as spending", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, seeded());
+    await user.click(await screen.findByRole("button", { name: "Editar Conta Itaú" }));
+    const dialog = await screen.findByRole("dialog");
+    const adjust = within(dialog).getByRole("button", { name: "Ajustar saldo" });
+    expect(adjust).toBeDisabled();
+    await user.type(within(dialog).getByLabelText("Saldo real hoje"), "920,00");
+    expect(nbsp(within(dialog).getByTestId("adjust-preview").textContent!)).toBe("Será lançada uma despesa de ajuste de R$ 80,00.");
+    await user.click(adjust);
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await waitFor(() => expect(nbsp(screen.getByTestId("total-balance").textContent!)).toBe("R$ 920,00"));
+
+    await user.click(screen.getByRole("link", { name: "Lançamentos" }));
+    expect(await screen.findByRole("button", { name: /Ajuste de saldo/ })).toBeInTheDocument();
+    expect(nbsp(screen.getByText("Despesas").parentElement!.textContent!)).toContain("R$ 0,00");
+  });
+
+  it("says when the balance already matches", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<App />, seeded());
+    await user.click(await screen.findByRole("button", { name: "Editar Conta Itaú" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByLabelText("Saldo real hoje"), "1.000,00");
+    expect(within(dialog).getByTestId("adjust-preview")).toHaveTextContent("O saldo já confere.");
+    expect(within(dialog).getByRole("button", { name: "Ajustar saldo" })).toBeDisabled();
+  });
+});

@@ -68,7 +68,7 @@ export function TransactionsPage() {
         <ul className={css({ display: "grid", gap: "2", listStyle: "none" })}>
           {vm.transactions.map((tx) => {
             const isStatementItem = tx.statementMonth !== null;
-            const title = isStatementItem ? statementTitle(tx) : tx.description || t(`transactions.${tx.kind}`);
+            const title = isStatementItem ? statementTitle(tx) : tx.adjustment ? t("transactions.adjustment") : tx.description || t(`transactions.${tx.kind}`);
             const source = tx.accountId !== null ? accountName(tx.accountId) : cardName(tx.cardId);
             const itemClass = `${card} ${css({ width: "100%", display: "flex", justifyContent: "space-between", textAlign: "left", opacity: tx.status === "scheduled" ? 0.7 : 1 })}`;
             const content = (

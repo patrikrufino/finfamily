@@ -3,13 +3,16 @@ import { useTranslation } from "react-i18next";
 import { css } from "../../../styled-system/css";
 import { MoneyText } from "../../shared/MoneyText";
 import { card, primaryButton, secondaryButton } from "../../shared/ui";
+import type { AccountDto } from "../../data/types";
 import { AccountDialog } from "./AccountDialog";
+import { AccountEditDialog } from "./AccountEditDialog";
 import { useAccountsViewModel } from "./useAccountsViewModel";
 
 export function AccountsSection() {
   const { t } = useTranslation();
   const vm = useAccountsViewModel();
   const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState<AccountDto | null>(null);
 
   return (
     <section aria-labelledby="accounts-title" className={css({ display: "grid", gap: "4" })}>
@@ -42,10 +45,18 @@ export function AccountsSection() {
               </div>
               <div className={css({ textAlign: "right" })}>
                 <MoneyText cents={account.balanceCents} className={css({ fontWeight: "bold" })} />
-                <div>
+                <div className={css({ display: "flex", gap: "1", justifyContent: "flex-end", marginTop: "1" })}>
                   <button
                     type="button"
-                    className={`${secondaryButton} ${css({ paddingBlock: "1", paddingInline: "2", fontSize: "xs", marginTop: "1" })}`}
+                    className={`${secondaryButton} ${css({ paddingBlock: "1", paddingInline: "2", fontSize: "xs" })}`}
+                    aria-label={`${t("accounts.edit")} ${account.name}`}
+                    onClick={() => setEditing(account)}
+                  >
+                    {t("accounts.edit")}
+                  </button>
+                  <button
+                    type="button"
+                    className={`${secondaryButton} ${css({ paddingBlock: "1", paddingInline: "2", fontSize: "xs" })}`}
                     aria-label={`${t("accounts.archive")} ${account.name}`}
                     onClick={() => vm.archiveAccount(account.id)}
                   >
@@ -59,6 +70,7 @@ export function AccountsSection() {
       )}
 
       <AccountDialog open={creating} onClose={() => setCreating(false)} />
+      {editing && <AccountEditDialog account={editing} vm={vm} onClose={() => setEditing(null)} />}
     </section>
   );
 }

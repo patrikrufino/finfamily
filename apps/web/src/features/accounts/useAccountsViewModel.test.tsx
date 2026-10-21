@@ -54,3 +54,55 @@ describe("useAccountsViewModel", () => {
     await waitFor(() => expect(result.current.accounts).toHaveLength(1));
   });
 });
+
+describe("useAccountsViewModel – initial balance and adjustments", () => {
+  it("edits the initial balance from typed text", async () => {
+    const { result } = renderHookWithProviders(() => useAccountsViewModel(), seeded());
+    await waitFor(() => expect(result.current.accounts).toHaveLength(2));
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await result.current.updateAccount(1, { name: "Checking", initialBalanceText: "1.500,00" });
+    });
+    expect(outcome).toEqual({ ok: true });
+    await waitFor(() => expect(result.current.accounts.find((a) => a.id === 1)?.balanceCents).toBe(150000));
+  });
+
+  it("validates the edit", async () => {
+    const { result } = renderHookWithProviders(() => useAccountsViewModel(), seeded());
+    let outcomes: unknown[] = [];
+    await act(async () => {
+      outcomes = [
+        await result.current.updateAccount(1, { name: " ", initialBalanceText: "1" }),
+        await result.current.updateAccount(1, { name: "X", initialBalanceText: "abc" }),
+      ];
+    });
+    expect(outcomes).toEqual([{ ok: false, error: "name_required" }, { ok: false, error: "invalid_amount" }]);
+  });
+
+  it("previews what an adjustment would record", async () => {
+    const { result } = renderHookWithProviders(() => useAccountsViewModel(), seeded());
+    await waitFor(() => expect(result.current.accounts).toHaveLength(2));
+    const account = result.current.accounts[0]!; // balance R$ 1.000,00
+    expect(result.current.previewAdjustment(account, "920,00")).toEqual({ kind: "expense", amountCents: 8000 });
+    expect(result.current.previewAdjustment(account, "1.050,00")).toEqual({ kind: "income", amountCents: 5000 });
+    expect(result.current.previewAdjustment(account, "1.000,00")).toEqual({ kind: "none" });
+    expect(result.current.previewAdjustment(account, "abc")).toEqual({ kind: "invalid" });
+  });
+
+  it("adjusts the balance to what the bank shows", async () => {
+    const { result } = renderHookWithProviders(() => useAccountsViewModel(), seeded());
+    await waitFor(() => expect(result.current.accounts).toHaveLength(2));
+    let outcome: unknown;
+    await act(async () => { outcome = await result.current.adjustBalance(1, "920,00"); });
+    expect(outcome).toEqual({ ok: true });
+    await waitFor(() => expect(result.current.accounts.find((a) => a.id === 1)?.balanceCents).toBe(92000));
+  });
+
+  it("reports when there is nothing to adjust", async () => {
+    const { result } = renderHookWithProviders(() => useAccountsViewModel(), seeded());
+    await waitFor(() => expect(result.current.accounts).toHaveLength(2));
+    let outcome: unknown;
+    await act(async () => { outcome = await result.current.adjustBalance(1, "1.000,00"); });
+    expect(outcome).toEqual({ ok: false, error: "no_adjustment_needed" });
+  });
+});

@@ -56,4 +56,13 @@ describe("useTransactionsViewModel", () => {
     await act(() => result.current.remove(result.current.transactions[0]!.id));
     await waitFor(() => expect(result.current.transactions).toHaveLength(1));
   });
+
+  it("leaves balance adjustments out of the income and expense totals", async () => {
+    const repo = seeded();
+    await repo.adjustAccount(1, { targetBalanceCents: 1, personId: 1, date: "2026-10-12" });
+    const { result } = renderHookWithProviders(() => useTransactionsViewModel("2026-10"), repo);
+    await waitFor(() => expect(result.current.transactions).toHaveLength(3));
+    expect(result.current.incomeCents).toBe(5000);
+    expect(result.current.expenseCents).toBe(2000);
+  });
 });
