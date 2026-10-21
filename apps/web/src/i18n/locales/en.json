@@ -53,7 +53,20 @@
       "savings": "Savings",
       "wallet": "Wallet",
       "investment": "Investment"
-    }
+    },
+    "edit": "Edit",
+    "editTitle": "Edit account",
+    "initialHint": "Corrects the starting balance. The current balance changes right away, without creating a transaction.",
+    "adjust": {
+      "title": "Adjust balance",
+      "hint": "Enter the balance the bank shows today. The difference becomes an adjustment transaction, which is not counted as spending or income.",
+      "target": "Real balance today",
+      "button": "Adjust balance",
+      "income": "An adjustment income of {{amount}} will be recorded.",
+      "expense": "An adjustment expense of {{amount}} will be recorded.",
+      "none": "The balance already matches."
+    },
+    "current": "Current balance"
   },
   "transactions": {
     "new": "New transaction",
@@ -78,7 +91,8 @@
     "expenseTotal": "Expenses",
     "category": "Category",
     "noCategory": "No category",
-    "accountOrCard": "Account or card"
+    "accountOrCard": "Account or card",
+    "adjustment": "Balance adjustment"
   },
   "errors": {
     "invalid_amount": "Enter a valid amount.",
@@ -108,7 +122,21 @@
     "card_purchase_must_be_expense": "Only expenses can be charged to a card.",
     "transfer_single_destination": "Choose a single destination.",
     "statement_month_required": "Enter the statement.",
-    "fee_needs_statement": "Interest and fines need a statement."
+    "fee_needs_statement": "Interest and fines need a statement.",
+    "no_adjustment_needed": "The balance already matches; nothing to adjust.",
+    "invalid_adjustment": "Invalid adjustment data.",
+    "installment_count_invalid": "Enter 2 to 120 installments.",
+    "amount_too_small": "The amount is too small for that many installments.",
+    "installment_source_required": "Choose an account or a card.",
+    "installment_single_source": "Choose only one account or card.",
+    "description_required": "Enter a description for the installment plan.",
+    "nothing_to_anticipate": "Pick at least one installment.",
+    "installment_not_anticipable": "Only future, still scheduled installments can be anticipated.",
+    "anticipation_above_nominal": "The amount paid cannot exceed the sum of the installments.",
+    "installment_locked_fields": "The kind and account of an installment cannot change.",
+    "plan_not_found": "Installment plan not found.",
+    "invalid_plan": "Invalid installment plan data.",
+    "invalid_anticipation": "Invalid anticipation data."
   },
   "budget": {
     "total": "Budgeted",
@@ -183,5 +211,46 @@
     },
     "archive": "Archive card",
     "limitUsage": "Limit usage"
+  },
+  "installments": {
+    "title": "Installments",
+    "count": "Number of installments",
+    "countHint": "Leave empty for a single payment. The amount entered is the total.",
+    "total": "Total amount",
+    "previewEqual": "{{count}}x of {{first}}",
+    "previewLast": "{{count}}x of {{first}} (last one {{last}})",
+    "empty": "No installment plans yet.",
+    "active": "In progress",
+    "done": "Completed",
+    "progress": "{{paid}} of {{count}} paid",
+    "remaining": "Remaining",
+    "paid": "Paid",
+    "next": "Next: {{date}} · {{amount}}",
+    "badge": "{{n}}/{{count}}",
+    "editInstallment": "Edit installment",
+    "anticipate": "Anticipate",
+    "settleAll": "Settle all",
+    "pick": "Installments to anticipate",
+    "amountPaid": "Amount paid",
+    "paymentDate": "Payment date",
+    "nominal": "Installments total",
+    "saving": "Saving",
+    "anticipationHint": "If you got a discount, enter what you actually paid.",
+    "cancel": "Cancel future installments",
+    "cancelConfirm": "Remove all future installments? Paid ones stay in the history.",
+    "confirm": "Confirm",
+    "anticipation": "Anticipation",
+    "status": {
+      "settled": "Paid",
+      "scheduled": "Scheduled"
+    },
+    "view": "View installment plan",
+    "back": "Back",
+    "nothingToAnticipate": "There are no installments to anticipate.",
+    "installmentOf": "Installment {{n}}",
+    "list": "Installments",
+    "amount": "Amount",
+    "date": "Date",
+    "payer": "Paid with"
   }
 }

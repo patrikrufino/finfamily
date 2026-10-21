@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Money } from "./money";
-import { accountBalance, type Account } from "./account";
+import { accountBalance, balanceAdjustment, type Account } from "./account";
 import type { Transaction } from "./transaction";
 
 const checking: Account = { id: 1, name: "Checking", type: "checking", initialBalance: Money.fromCents(100000), archived: false };
@@ -45,5 +45,26 @@ describe("accountBalance", () => {
   it("ignores transactions from other accounts", () => {
     const txs = [tx({ accountId: 99, amount: Money.fromCents(5000) })];
     expect(accountBalance(checking, txs).cents).toBe(100000);
+  });
+});
+
+describe("balanceAdjustment", () => {
+  it("is an expense when the real balance is lower", () => {
+    const adj = balanceAdjustment(Money.fromCents(100000), Money.fromCents(92000));
+    expect(adj).toEqual({ kind: "expense", amount: Money.fromCents(8000) });
+  });
+
+  it("is an income when the real balance is higher", () => {
+    const adj = balanceAdjustment(Money.fromCents(100000), Money.fromCents(105000));
+    expect(adj).toEqual({ kind: "income", amount: Money.fromCents(5000) });
+  });
+
+  it("is null when nothing differs", () => {
+    expect(balanceAdjustment(Money.fromCents(100000), Money.fromCents(100000))).toBeNull();
+  });
+
+  it("handles negative balances", () => {
+    expect(balanceAdjustment(Money.fromCents(-1000), Money.fromCents(-3000))).toEqual({ kind: "expense", amount: Money.fromCents(2000) });
+    expect(balanceAdjustment(Money.fromCents(-1000), Money.fromCents(500))).toEqual({ kind: "income", amount: Money.fromCents(1500) });
   });
 });

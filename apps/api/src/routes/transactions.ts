@@ -84,9 +84,15 @@ export function transactionsRoutes(db: AppDatabase) {
 
   app.put("/:id", async (c) => {
     const id = Number(c.req.param("id"));
-    if (!db.select().from(transactions).where(eq(transactions.id, id)).get()) return c.json({ errors: ["transaction_not_found"] }, 404);
+    const existing = db.select().from(transactions).where(eq(transactions.id, id)).get();
+    if (!existing) return c.json({ errors: ["transaction_not_found"] }, 404);
     const result = await parseBody(await c.req.json().catch(() => null));
     if ("errors" in result) return c.json({ errors: result.errors }, result.status);
+    // Installments keep their nature: only amount, date, category, description and status may change.
+    const v = result.values;
+    if (existing.planId !== null && (v.kind !== existing.kind || v.accountId !== existing.accountId || v.cardId !== existing.cardId)) {
+      return c.json({ errors: ["installment_locked_fields"] }, 422);
+    }
     return c.json(transactionDto(db.update(transactions).set(result.values).where(eq(transactions.id, id)).returning().get()));
   });
 

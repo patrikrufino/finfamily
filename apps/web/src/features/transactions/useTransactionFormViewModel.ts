@@ -1,6 +1,8 @@
 import {
   categoryAllows,
   Money,
+  validateInstallmentPlan,
+  type InstallmentError,
   validateTransactionCategory,
   validateTransactionInput,
   type TransactionError,
@@ -24,11 +26,13 @@ export interface TransactionFormValues {
   categoryId: number | null;
   description: string;
   settled: boolean;
+  /** Number of installments typed by the user; empty means a single payment. */
+  installmentsText: string;
 }
 
 export type PaymentSource = { type: "account" | "card"; id: number };
 
-export type FormError = TransactionError | "invalid_amount" | "account_required" | "person_unknown";
+export type FormError = TransactionError | InstallmentError | "invalid_amount" | "account_required" | "person_unknown" | "description_required";
 
 interface Options {
   transaction?: TransactionDto;
@@ -70,6 +74,7 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
         categoryId: transaction.categoryId,
         description: transaction.description,
         settled: transaction.status === "settled",
+        installmentsText: "",
       }
     : {
         kind: "expense",
@@ -81,6 +86,7 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
         categoryId: null,
         description: "",
         settled: true,
+        installmentsText: "",
       };
   const merged: TransactionFormValues = { ...base, ...edited };
   const categories = allCategories.filter((c) => categoryAllows(c, merged.kind));
@@ -90,6 +96,27 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
   const cardId = merged.kind === "expense" ? merged.cardId : null;
   const accountId = cardId !== null ? null : (merged.accountId ?? accounts[0]?.id ?? null);
   const values: TransactionFormValues = { ...merged, categoryId, cardId, accountId };
+
+  const savePlan = useMutation({
+    mutationFn: repository.createPlan,
+    onSuccess: () => {
+      for (const key of ["plans", "transactions", "accounts", "budget", "cards", "statement"]) {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      }
+    },
+  });
+
+  /** Only a new expense can be split; editing keeps working on the single transaction. */
+  const canSplitInInstallments = !transaction && values.kind === "expense";
+  const installmentCount = /^\d+$/.test(values.installmentsText.trim()) ? Number(values.installmentsText) : null;
+  const total = Money.parse(values.amountText, locale);
+  const installmentPreview =
+    canSplitInInstallments && installmentCount !== null && installmentCount >= 2 && total && total.cents > 0 && total.cents >= installmentCount
+      ? (() => {
+          const parts = total.split(installmentCount);
+          return { count: installmentCount, firstCents: parts[0]!.cents, lastCents: parts[parts.length - 1]!.cents };
+        })()
+      : null;
 
   const save = useMutation({
     mutationFn: (input: NewTransaction) =>
@@ -111,7 +138,31 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
     }));
   }
 
+  async function submitPlan(): Promise<boolean> {
+    const found: FormError[] = [];
+    const amount = Money.parse(values.amountText, locale);
+    const personId = people.find((p) => p.name.toLowerCase() === person)?.id;
+    if (!amount) found.push("invalid_amount");
+    if (!values.description.trim()) found.push("description_required");
+    if (personId === undefined) found.push("person_unknown");
+    if (amount && personId !== undefined) {
+      const count = installmentCount ?? Number.NaN;
+      found.push(...validateInstallmentPlan({ total: amount, count, firstDate: values.date, accountId: values.accountId, cardId: values.cardId }));
+      if (found.length === 0) {
+        await savePlan.mutateAsync({
+          description: values.description.trim(), totalCents: amount.cents, count, firstDate: values.date,
+          accountId: values.accountId, cardId: values.cardId, categoryId: values.categoryId, personId,
+        });
+        setErrors([]);
+        return true;
+      }
+    }
+    setErrors(found);
+    return false;
+  }
+
   async function submit(): Promise<boolean> {
+    if (canSplitInInstallments && values.installmentsText.trim() !== "") return submitPlan();
     const found: FormError[] = [];
     const amount = Money.parse(values.amountText, locale);
     const personId = people.find((p) => p.name.toLowerCase() === person)?.id;
@@ -151,5 +202,9 @@ export function useTransactionFormViewModel({ transaction, today = isoToday() }:
     }));
   }
 
-  return { values, setField, setSource, errors, submit, accounts, cards, categories, isSaving: save.isPending };
+  return {
+    values, setField, setSource, errors, submit, accounts, cards, categories,
+    canSplitInInstallments, installmentPreview,
+    isSaving: save.isPending || savePlan.isPending,
+  };
 }

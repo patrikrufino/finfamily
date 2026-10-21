@@ -53,7 +53,20 @@
       "savings": "Poupança",
       "wallet": "Carteira",
       "investment": "Investimento"
-    }
+    },
+    "edit": "Editar",
+    "editTitle": "Editar conta",
+    "initialHint": "Corrige o saldo de partida. O saldo atual muda na hora, sem criar lançamento.",
+    "adjust": {
+      "title": "Ajustar saldo",
+      "hint": "Informe o saldo que aparece no banco hoje. A diferença vira um lançamento de ajuste, que não conta como gasto nem receita.",
+      "target": "Saldo real hoje",
+      "button": "Ajustar saldo",
+      "income": "Será lançada uma receita de ajuste de {{amount}}.",
+      "expense": "Será lançada uma despesa de ajuste de {{amount}}.",
+      "none": "O saldo já confere."
+    },
+    "current": "Saldo atual"
   },
   "transactions": {
     "new": "Novo lançamento",
@@ -78,7 +91,8 @@
     "expenseTotal": "Despesas",
     "category": "Categoria",
     "noCategory": "Sem categoria",
-    "accountOrCard": "Conta ou cartão"
+    "accountOrCard": "Conta ou cartão",
+    "adjustment": "Ajuste de saldo"
   },
   "errors": {
     "invalid_amount": "Informe um valor válido.",
@@ -108,7 +122,21 @@
     "card_purchase_must_be_expense": "No cartão só cabem despesas.",
     "transfer_single_destination": "Escolha só uma conta de destino.",
     "statement_month_required": "Informe a fatura.",
-    "fee_needs_statement": "Juros e multa precisam de uma fatura."
+    "fee_needs_statement": "Juros e multa precisam de uma fatura.",
+    "no_adjustment_needed": "O saldo já confere; nada a ajustar.",
+    "invalid_adjustment": "Dados do ajuste inválidos.",
+    "installment_count_invalid": "Informe de 2 a 120 parcelas.",
+    "amount_too_small": "O valor é pequeno demais para esse número de parcelas.",
+    "installment_source_required": "Escolha uma conta ou um cartão.",
+    "installment_single_source": "Escolha só uma conta ou um cartão.",
+    "description_required": "Informe uma descrição para o parcelamento.",
+    "nothing_to_anticipate": "Escolha ao menos uma parcela.",
+    "installment_not_anticipable": "Só parcelas futuras e ainda previstas podem ser antecipadas.",
+    "anticipation_above_nominal": "O valor pago não pode passar da soma das parcelas.",
+    "installment_locked_fields": "Tipo e conta de uma parcela não podem mudar.",
+    "plan_not_found": "Parcelamento não encontrado.",
+    "invalid_plan": "Dados do parcelamento inválidos.",
+    "invalid_anticipation": "Dados da antecipação inválidos."
   },
   "budget": {
     "total": "Orçado",
@@ -183,5 +211,46 @@
     },
     "archive": "Arquivar cartão",
     "limitUsage": "Uso do limite"
+  },
+  "installments": {
+    "title": "Parcelamentos",
+    "count": "Nº de parcelas",
+    "countHint": "Deixe vazio para pagamento único. O valor informado é o total.",
+    "total": "Valor total",
+    "previewEqual": "{{count}}x de {{first}}",
+    "previewLast": "{{count}}x de {{first}} (última de {{last}})",
+    "empty": "Nenhum parcelamento ainda.",
+    "active": "Em andamento",
+    "done": "Concluídos",
+    "progress": "{{paid}} de {{count}} pagas",
+    "remaining": "Restante",
+    "paid": "Pago",
+    "next": "Próxima: {{date}} · {{amount}}",
+    "badge": "{{n}}/{{count}}",
+    "editInstallment": "Editar parcela",
+    "anticipate": "Antecipar",
+    "settleAll": "Quitar tudo",
+    "pick": "Parcelas a antecipar",
+    "amountPaid": "Valor pago",
+    "paymentDate": "Data do pagamento",
+    "nominal": "Valor das parcelas",
+    "saving": "Economia",
+    "anticipationHint": "Se houve desconto, informe o valor que você realmente pagou.",
+    "cancel": "Cancelar parcelas futuras",
+    "cancelConfirm": "Remover todas as parcelas futuras? As já pagas continuam no histórico.",
+    "confirm": "Confirmar",
+    "anticipation": "Antecipação",
+    "status": {
+      "settled": "Paga",
+      "scheduled": "Prevista"
+    },
+    "view": "Ver parcelamento",
+    "back": "Voltar",
+    "nothingToAnticipate": "Não há parcelas para antecipar.",
+    "installmentOf": "Parcela {{n}}",
+    "list": "Parcelas",
+    "amount": "Valor",
+    "date": "Data",
+    "payer": "Pago com"
   }
 }

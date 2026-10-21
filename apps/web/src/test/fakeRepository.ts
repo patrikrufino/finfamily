@@ -1,13 +1,20 @@
 import {
   ALWAYS_FROM,
   accountBalance,
+  balanceAdjustment,
   budgetForMonth,
   budgetProgress,
+  buildInstallmentSchedule,
   buildStatement,
   cardUsage,
+  installmentStatusFor,
+  isAnticipable,
   Money,
+  planProgress,
   ruleForMonth,
   statementMonthFor,
+  validateAnticipation,
+  validateInstallmentPlan,
   type Account,
   type BudgetEntry,
   type CycleRule,
@@ -20,6 +27,9 @@ import {
   type CategoryDto,
   type NewCard,
   type NewCategory,
+  type NewPlan,
+  type PlanDetailDto,
+  type PlanDto,
   type StatementDto,
   type FinanceRepository,
   type NewAccount,
@@ -51,6 +61,8 @@ export function createFakeRepository(
   let cardRows: { id: number; name: string; limitCents: number; archived: boolean }[] = [];
   const cycleRules: CycleRule[] = [];
   let nextCardId = 1;
+  let plans: (NewPlan & { id: number })[] = [];
+  let nextPlanId = 1;
   let nextAccountId = 1;
   let nextTransactionId = 1;
 
@@ -65,7 +77,7 @@ export function createFakeRepository(
   };
 
   const withDefaults = (input: NewTransaction, id: number): TransactionDto => ({
-    cardId: null, statementMonth: null, feeKind: null, ...input, id,
+    cardId: null, statementMonth: null, feeKind: null, adjustment: false, planId: null, installmentNumber: null, ...input, id,
   });
   const toDomainTx = (t: TransactionDto): Transaction => ({ ...t, amount: Money.fromCents(t.amountCents) });
   const domainCard = (c: (typeof cardRows)[number]) => ({ id: c.id, name: c.name, limit: Money.fromCents(c.limitCents), archived: c.archived });
@@ -94,9 +106,35 @@ export function createFakeRepository(
     };
   };
 
+  const planSummary = (p: (typeof plans)[number]): PlanDto => {
+    const progress = planProgress(transactions.filter((t) => t.planId === p.id).map(toDomainTx));
+    return { ...p, ...progress, status: progress.remainingCount > 0 ? "active" : "done" };
+  };
+  const planDetail = (p: (typeof plans)[number]): PlanDetailDto => ({
+    ...planSummary(p),
+    installments: transactions
+      .filter((t) => t.planId === p.id)
+      .sort((a, b) => (a.installmentNumber ?? 1e9) - (b.installmentNumber ?? 1e9) || a.date.localeCompare(b.date))
+      .map((t) => ({ ...t, anticipable: isAnticipable(toDomainTx(t), today()) })),
+  });
+
   const repo: FinanceRepository & { calls: string[] } = {
     calls: [],
     listPeople: async () => people,
+    adjustAccount: async (id, input) => {
+      repo.calls.push("adjustAccount");
+      const account = accounts.find((a) => a.id === id)!;
+      const current = Money.fromCents(toAccountDto(account).balanceCents);
+      const adjustment = balanceAdjustment(current, Money.fromCents(input.targetBalanceCents));
+      if (!adjustment) throw new ApiError(422, ["no_adjustment_needed"]);
+      const created = withDefaults({
+        kind: adjustment.kind, amountCents: adjustment.amount.cents, date: input.date ?? today(), accountId: id,
+        toAccountId: null, categoryId: null, description: "Ajuste de saldo", status: "settled", personId: input.personId,
+        adjustment: true,
+      }, nextTransactionId++);
+      transactions.push(created);
+      return created;
+    },
     listAccounts: async () => accounts.filter((a) => !a.archived).map(toAccountDto),
     createAccount: async (input) => {
       repo.calls.push("createAccount");
@@ -125,7 +163,10 @@ export function createFakeRepository(
     },
     updateTransaction: async (id, input) => {
       repo.calls.push("updateTransaction");
-      transactions = transactions.map((t) => (t.id === id ? withDefaults(input, id) : t));
+      // Like the API, an update never changes the plan link or the adjustment flag.
+      transactions = transactions.map((t) =>
+        t.id === id ? withDefaults({ ...input, planId: t.planId, installmentNumber: t.installmentNumber, adjustment: t.adjustment }, id) : t,
+      );
       return transactions.find((t) => t.id === id)!;
     },
     deleteTransaction: async (id) => {
@@ -161,12 +202,52 @@ export function createFakeRepository(
       if (statementFor(cardId, month).totalCents <= 0) throw new ApiError(422, ["statement_empty"]);
       const base = {
         date: input.date, accountId: input.accountId, toAccountId: null, categoryId: null, cardId, statementMonth: month,
-        status: "settled" as const, personId: input.personId,
+        status: "settled" as const, personId: input.personId, adjustment: false, planId: null, installmentNumber: null,
       };
       transactions.push({ ...base, id: nextTransactionId++, kind: "transfer", amountCents: input.amountCents, feeKind: null, description: `${card.name} ${month}` });
       if (input.interestCents > 0) transactions.push({ ...base, id: nextTransactionId++, kind: "expense", amountCents: input.interestCents, feeKind: "interest", description: "interest" });
       if (input.fineCents > 0) transactions.push({ ...base, id: nextTransactionId++, kind: "expense", amountCents: input.fineCents, feeKind: "fine", description: "fine" });
       return statementFor(cardId, month);
+    },
+    listPlans: async () => plans.map(planSummary),
+    getPlan: async (id) => planDetail(plans.find((p) => p.id === id)!),
+    createPlan: async (input) => {
+      repo.calls.push("createPlan");
+      const errors = validateInstallmentPlan({
+        total: Money.fromCents(input.totalCents), count: input.count, firstDate: input.firstDate,
+        accountId: input.accountId, cardId: input.cardId,
+      });
+      if (errors.length) throw new ApiError(422, errors);
+      const plan = { ...input, id: nextPlanId++ };
+      plans.push(plan);
+      for (const item of buildInstallmentSchedule(Money.fromCents(input.totalCents), input.count, input.firstDate)) {
+        transactions.push(withDefaults({
+          kind: "expense", amountCents: item.amount.cents, date: item.date, accountId: input.accountId, cardId: input.cardId,
+          toAccountId: null, categoryId: input.categoryId, description: input.description,
+          status: installmentStatusFor(item.date, today()), personId: input.personId, planId: plan.id, installmentNumber: item.number,
+        }, nextTransactionId++));
+      }
+      return planDetail(plan);
+    },
+    anticipatePlan: async (id, input) => {
+      repo.calls.push("anticipatePlan");
+      const plan = plans.find((p) => p.id === id)!;
+      const errors = validateAnticipation(
+        transactions.filter((t) => t.planId === id).map(toDomainTx), input.installmentIds, Money.fromCents(input.amountCents), today(),
+      );
+      if (errors.length) throw new ApiError(422, errors);
+      transactions = transactions.filter((t) => !input.installmentIds.includes(t.id));
+      transactions.push(withDefaults({
+        kind: "expense", amountCents: input.amountCents, date: input.date, accountId: plan.accountId, cardId: plan.cardId,
+        toAccountId: null, categoryId: plan.categoryId, description: `Antecipação · ${plan.description}`,
+        status: installmentStatusFor(input.date, today()), personId: plan.personId, planId: id, installmentNumber: null,
+      }, nextTransactionId++));
+      return planDetail(plan);
+    },
+    cancelPlan: async (id) => {
+      repo.calls.push("cancelPlan");
+      transactions = transactions.filter((t) => !(t.planId === id && t.status === "scheduled"));
+      if (!transactions.some((t) => t.planId === id)) plans = plans.filter((p) => p.id !== id);
     },
     listCategories: async () => categories.filter((c) => !c.archived),
     createCategory: async (input) => {

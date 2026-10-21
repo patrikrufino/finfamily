@@ -1,0 +1,1 @@
+ALTER TABLE `transactions` ADD `adjustment` integer DEFAULT false NOT NULL;

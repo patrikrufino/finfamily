@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, addMonths, clampDay, daysInMonth, isoDate, monthOf } from "./dates";
+import { addDays, addMonths, addMonthsToDate, clampDay, daysInMonth, isoDate, monthOf } from "./dates";
 
 describe("dates", () => {
   it("knows the length of months, including leap years", () => {
@@ -28,5 +28,12 @@ describe("dates", () => {
 
   it("extracts the month of a date", () => {
     expect(monthOf("2026-10-25")).toBe("2026-10");
+  });
+
+  it("adds months to a date keeping the day, clamped to the month length", () => {
+    expect(addMonthsToDate("2026-01-31", 1)).toBe("2026-02-28");
+    expect(addMonthsToDate("2026-01-31", 2)).toBe("2026-03-31");
+    expect(addMonthsToDate("2026-01-31", 3)).toBe("2026-04-30");
+    expect(addMonthsToDate("2026-11-15", 2)).toBe("2027-01-15");
   });
 });

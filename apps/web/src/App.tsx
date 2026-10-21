@@ -9,6 +9,8 @@ import { BudgetPage } from "./pages/BudgetPage";
 import { CardDetailPage } from "./pages/CardDetailPage";
 import { CardsPage } from "./pages/CardsPage";
 import { HomePage } from "./pages/HomePage";
+import { InstallmentsPage } from "./pages/InstallmentsPage";
+import { PlanDetailPage } from "./pages/PlanDetailPage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { TransactionsPage } from "./pages/TransactionsPage";
 
@@ -54,6 +56,8 @@ export function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/transactions" element={<TransactionsPage />} />
           <Route path="/budget" element={<BudgetPage />} />
+          <Route path="/installments" element={<InstallmentsPage />} />
+          <Route path="/installments/:id" element={<PlanDetailPage />} />
           <Route path="/cards" element={<CardsPage />} />
           <Route path="/cards/:id" element={<CardDetailPage />} />
           {NAV_ITEMS.filter(({ key }) => key !== "home" && key !== "transactions" && key !== "budget" && key !== "cards").map(({ path, key }) => (

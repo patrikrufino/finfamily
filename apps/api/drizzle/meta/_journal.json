@@ -29,6 +29,20 @@
       "when": 1792541056736,
       "tag": "0003_credit_cards",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1792541623481,
+      "tag": "0004_account_adjustments",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1792541818339,
+      "tag": "0005_installments",
+      "breakpoints": true
     }
   ]
 }
