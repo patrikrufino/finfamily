@@ -57,7 +57,7 @@ export function AccountEditDialog({ account, vm, onClose }: Props) {
           <button type="submit" className={primaryButton}>{t("common.save")}</button>
         </form>
 
-        <section aria-label={t("accounts.adjust.title")} className={css({ display: "grid", gap: "3", borderTop: "1px solid", borderColor: "border", paddingTop: "4" })}>
+        <section aria-label={t("accounts.adjust.title")} className={css({ display: "grid", gap: "3", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "border", paddingTop: "4" })}>
           <h3 className={css({ fontWeight: "bold" })}>{t("accounts.adjust.title")}</h3>
           <p className={css({ color: "muted", fontSize: "sm" })}>
             {t("accounts.current")}: <MoneyText cents={account.balanceCents} />. {t("accounts.adjust.hint")}

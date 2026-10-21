@@ -15,8 +15,7 @@
     "transactions": "Transactions",
     "budget": "Budget",
     "cards": "Cards",
-    "debts": "Debts",
-    "comingSoon": "Coming soon"
+    "debts": "Debts"
   },
   "theme": {
     "dark": "Dark theme"

@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { NavLink, Route, Routes } from "react-router";
+import { Route, Routes } from "react-router";
 import { useTranslation } from "react-i18next";
 import { css } from "../styled-system/css";
+import { BottomNav } from "./features/shell/BottomNav";
 import { PersonPicker } from "./features/people/PersonPicker";
 import { ThemeToggle } from "./features/theme/ThemeToggle";
 import { TransactionDialog } from "./features/transactions/TransactionDialog";
@@ -13,32 +14,15 @@ import { DebtsPage } from "./pages/DebtsPage";
 import { HomePage } from "./pages/HomePage";
 import { InstallmentsPage } from "./pages/InstallmentsPage";
 import { PlanDetailPage } from "./pages/PlanDetailPage";
-import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { TransactionsPage } from "./pages/TransactionsPage";
-
-const NAV_ITEMS = [
-  { path: "/", key: "home" },
-  { path: "/transactions", key: "transactions" },
-  { path: "/budget", key: "budget" },
-  { path: "/cards", key: "cards" },
-  { path: "/debts", key: "debts" },
-] as const;
-
-const navLink = css({
-  flex: 1,
-  textAlign: "center",
-  paddingBlock: "3",
-  fontSize: "xs",
-  color: "muted",
-  "&[aria-current=page]": { color: "primary", fontWeight: "bold" },
-});
+import { PlusIcon } from "./shared/icons";
 
 export function App() {
   const { t } = useTranslation();
   const [creating, setCreating] = useState(false);
 
   return (
-    <div className={css({ minHeight: "100dvh", background: "bg", color: "text", paddingBottom: "36" })}>
+    <div className={css({ minHeight: "100dvh", background: "bg", color: "text", paddingBottom: "calc(168px + env(safe-area-inset-bottom))" })}>
       <header
         className={css({
           display: "flex",
@@ -64,12 +48,10 @@ export function App() {
           <Route path="/debts/:id" element={<DebtDetailPage />} />
           <Route path="/cards" element={<CardsPage />} />
           <Route path="/cards/:id" element={<CardDetailPage />} />
-          {NAV_ITEMS.filter(({ key }) => key !== "home" && key !== "transactions" && key !== "budget" && key !== "cards" && key !== "debts").map(({ path, key }) => (
-            <Route key={key} path={path} element={<PlaceholderPage titleKey={`pages.${key}`} />} />
-          ))}
         </Routes>
       </main>
 
+      {/* Sits 16px above the 64px bottom bar and the device safe area, so it never covers the navigation. */}
       <button
         type="button"
         onClick={() => setCreating(true)}
@@ -77,7 +59,8 @@ export function App() {
         className={css({
           position: "fixed",
           right: "4",
-          bottom: "20",
+          bottom: "calc(80px + env(safe-area-inset-bottom))",
+          zIndex: 6,
           width: "14",
           height: "14",
           borderRadius: "full",
@@ -86,35 +69,18 @@ export function App() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: "2xl",
           boxShadow: "lg",
+          touchAction: "manipulation",
+          WebkitTapHighlightColor: "transparent",
+          "&:active": { transform: "scale(0.96)" },
         })}
       >
-        +
+        <PlusIcon size={28} />
       </button>
 
       <TransactionDialog open={creating} onClose={() => setCreating(false)} />
 
-      <nav
-        aria-label={t("nav.label")}
-        className={css({
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          display: "flex",
-          background: "surface",
-          borderTop: "1px solid",
-          borderColor: "border",
-          paddingBottom: "env(safe-area-inset-bottom)",
-        })}
-      >
-        {NAV_ITEMS.map(({ path, key }) => (
-          <NavLink key={key} to={path} end={path === "/"} className={navLink}>
-            {t(`nav.${key}`)}
-          </NavLink>
-        ))}
-      </nav>
+      <BottomNav />
     </div>
   );
 }
