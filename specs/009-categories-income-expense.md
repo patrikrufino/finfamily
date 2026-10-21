@@ -31,7 +31,7 @@ A category is either for **income** or for **expenses**, never both. Each catego
 - **When** a category is created with an icon outside the list **Then** it is rejected.
 
 ### Defaults
-- **Given** an empty database **Then** the 15 default categories exist after the first start.
+- **Given** an empty database **Then** the 17 default categories exist after the first start.
 - **When** "add defaults" runs twice **Then** nothing is duplicated, and categories the user already has (same name and kind) are kept.
 
 ### Migration

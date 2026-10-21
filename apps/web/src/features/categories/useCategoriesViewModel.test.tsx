@@ -76,9 +76,9 @@ describe("useCategoriesViewModel", () => {
       first = await result.current.addDefaults();
       second = await result.current.addDefaults();
     });
-    expect(first).toEqual({ ok: true, created: 12 }); // 15 defaults minus Mercado, Carro and Salário the user already has
+    expect(first).toEqual({ ok: true, created: 14 }); // 17 defaults minus Mercado, Carro and Salário the user already has
     expect(second).toEqual({ ok: true, created: 0 });
-    await waitFor(() => expect(result.current.expense).toHaveLength(12));
+    await waitFor(() => expect(result.current.expense).toHaveLength(14));
     expect(result.current.income).toHaveLength(3);
   });
 });

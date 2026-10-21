@@ -234,7 +234,7 @@ describe("categories screen", () => {
     const user = userEvent.setup();
     renderWithProviders(<App />, catSeed(), "/categories");
     await user.click(await screen.findByRole("button", { name: "Adicionar categorias padrão" }));
-    expect(await screen.findByRole("status")).toHaveTextContent("12 categorias adicionadas.");
+    expect(await screen.findByRole("status")).toHaveTextContent("14 categorias adicionadas.");
     expect(screen.getByRole("button", { name: /Editar categoria: Moradia/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Editar categoria: Comida fora/ })).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /Editar categoria: Mercado/ })).toHaveLength(1);

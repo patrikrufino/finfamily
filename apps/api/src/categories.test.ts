@@ -116,7 +116,7 @@ describe("default categories", () => {
     const db = createDatabase(":memory:");
     expect(seedDefaultCategories(db).created).toBe(DEFAULT_CATEGORIES.length);
     const rows = (await (await createApp(db).request("/api/categories")).json()) as any[];
-    expect(rows).toHaveLength(15);
+    expect(rows).toHaveLength(17);
     expect(rows.filter((c) => c.kind === "income").map((c) => c.name).sort()).toEqual(["Outras receitas", "Projetos", "Salário"]);
     expect(rows.find((c) => c.name === "Mercado")).toMatchObject({ kind: "expense", icon: "🛒" });
     expect(rows.every((c) => c.icon !== null)).toBe(true);
@@ -126,7 +126,7 @@ describe("default categories", () => {
     const db = createDatabase(":memory:");
     app = createApp(db);
     await create({ name: "mercado", icon: "🍎" });
-    expect(seedDefaultCategories(db).created).toBe(14);
+    expect(seedDefaultCategories(db).created).toBe(16);
     expect(seedDefaultCategories(db).created).toBe(0);
     const mercado = (await list()).filter((c) => c.name.toLowerCase() === "mercado");
     expect(mercado).toHaveLength(1);
@@ -147,8 +147,8 @@ describe("default categories", () => {
     await create({ name: "Salário", kind: "income", icon: "💰" });
     const res = await call("POST", "/api/categories/defaults");
     expect(res.status).toBe(201);
-    expect(res.body.created).toBe(14);
+    expect(res.body.created).toBe(16);
     expect((await call("POST", "/api/categories/defaults")).body.created).toBe(0);
-    expect(await list()).toHaveLength(15);
+    expect(await list()).toHaveLength(17);
   });
 });

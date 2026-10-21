@@ -58,7 +58,7 @@ describe("default categories", () => {
     expect(names("income")).toEqual(["Salário", "Projetos", "Outras receitas"]);
     expect(names("expense")).toEqual([
       "Moradia", "Assinaturas", "Carro", "Transporte", "Mercado", "Comida fora", "Cuidados pessoais",
-      "Educação", "Vestuário", "Saúde", "Dívidas", "Outros",
+      "Lazer", "Presentes/Doações", "Educação", "Vestuário", "Saúde", "Dívidas", "Outros",
     ]);
     for (const c of DEFAULT_CATEGORIES) expect(isCategoryIcon(c.icon), c.name).toBe(true);
   });

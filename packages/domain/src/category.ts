@@ -60,6 +60,8 @@ export const DEFAULT_CATEGORIES: readonly DefaultCategory[] = [
   { name: "Mercado", kind: "expense", icon: "🛒" },
   { name: "Comida fora", kind: "expense", icon: "🍽️" },
   { name: "Cuidados pessoais", kind: "expense", icon: "💇" },
+  { name: "Lazer", kind: "expense", icon: "🎉" },
+  { name: "Presentes/Doações", kind: "expense", icon: "🎁" },
   { name: "Educação", kind: "expense", icon: "🎓" },
   { name: "Vestuário", kind: "expense", icon: "👕" },
   { name: "Saúde", kind: "expense", icon: "🩺" },
