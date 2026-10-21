@@ -88,10 +88,10 @@ test("opening the app by its network address over plain HTTP explains why it can
 
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
-  await page.goto(`http://${ip}:3333/settings`);
+  await page.goto(`http://${ip}:3152/settings`);
   await expect(page.getByTestId("diag-secure")).toHaveText("Não");
   await expect(page.getByTestId("diag-sw")).toHaveText("Indisponível neste endereço");
-  await expect(page.getByRole("alert").filter({ hasText: "Você abriu o app por HTTP" })).toContainText(`http://${ip}:3333`);
+  await expect(page.getByRole("alert").filter({ hasText: "Você abriu o app por HTTP" })).toContainText(`http://${ip}:3152`);
 
   // This is what the browser itself reports for the same page.
   const cdp = await context.newCDPSession(page);

@@ -8,7 +8,8 @@ describe("loadConfig", () => {
   it("has sensible defaults for running at home", () => {
     const c = loadConfig({}, "/srv/app");
     expect(c).toMatchObject({
-      port: 3333,
+      apiPort: 3132,
+      webPort: 3152,
       databasePath: "finfamily.db",
       backup: { dir: "backups", keep: 14, intervalHours: 24 },
     });
@@ -19,8 +20,16 @@ describe("loadConfig", () => {
   });
 
   it("reads overrides from the environment", () => {
-    const c = loadConfig({ PORT: "8080", DATABASE_PATH: "x.db", BACKUP_DIR: "/b", BACKUP_KEEP: "3", BACKUP_INTERVAL_HOURS: "6", WEB_DIST: "/www" }, "/srv/app");
-    expect(c).toMatchObject({ port: 8080, databasePath: "x.db", webDist: "/www", backup: { dir: "/b", keep: 3, intervalHours: 6 } });
+    const c = loadConfig({ API_PORT: "8081", WEB_PORT: "8080", DATABASE_PATH: "x.db", BACKUP_DIR: "/b", BACKUP_KEEP: "3", BACKUP_INTERVAL_HOURS: "6", WEB_DIST: "/www" }, "/srv/app");
+    expect(c).toMatchObject({ apiPort: 8081, webPort: 8080, databasePath: "x.db", webDist: "/www", backup: { dir: "/b", keep: 3, intervalHours: 6 } });
+  });
+
+  it("serves the API and the app on different ports", () => {
+    expect(() => loadConfig({ API_PORT: "4000", WEB_PORT: "4000" }, "/srv/app")).toThrow(/different/);
+  });
+
+  it("can turn the web app off (development, where Vite serves it)", () => {
+    expect(loadConfig({ WEB_DIST: "off" }, "/srv/app").webDist).toBeNull();
   });
 
   it("allows turning the schedule off", () => {
@@ -28,7 +37,8 @@ describe("loadConfig", () => {
   });
 
   it("rejects invalid numbers instead of silently using defaults", () => {
-    expect(() => loadConfig({ PORT: "abc" }, "/srv/app")).toThrow(/PORT/);
+    expect(() => loadConfig({ API_PORT: "abc" }, "/srv/app")).toThrow(/API_PORT/);
+    expect(() => loadConfig({ WEB_PORT: "0" }, "/srv/app")).toThrow(/WEB_PORT/);
     expect(() => loadConfig({ BACKUP_KEEP: "0" }, "/srv/app")).toThrow(/BACKUP_KEEP/);
     expect(() => loadConfig({ BACKUP_INTERVAL_HOURS: "-1" }, "/srv/app")).toThrow(/BACKUP_INTERVAL_HOURS/);
   });

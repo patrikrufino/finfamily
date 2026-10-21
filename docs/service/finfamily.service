@@ -8,7 +8,8 @@ After=network-online.target
 [Service]
 WorkingDirectory=%h/finfamily
 Environment=DATABASE_PATH=%h/finfamily-data/finfamily.db
-Environment=PORT=3333
+Environment=API_PORT=3132
+Environment=WEB_PORT=3152
 # Environment=TLS_CERT=%h/finfamily-data/cert.pem
 # Environment=TLS_KEY=%h/finfamily-data/key.pem
 ExecStart=/usr/bin/env pnpm start

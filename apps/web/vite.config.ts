@@ -50,7 +50,9 @@ export default defineConfig({
     }),
   ],
   define: { __APP_VERSION__: JSON.stringify(version) },
-  server: { proxy: { "/api": "http://localhost:3333" } },
+  // Dev: the app on 3152 (same port as in production) proxies /api to the API on 3132.
+  server: { host: true, port: 3152, strictPort: true, proxy: { "/api": "http://localhost:3132" } },
+  preview: { host: true, port: 3152, strictPort: true, proxy: { "/api": "http://localhost:3132" } },
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],

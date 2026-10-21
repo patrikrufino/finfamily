@@ -15,7 +15,8 @@
     <key>EnvironmentVariables</key>
     <dict>
       <key>DATABASE_PATH</key><string>/Users/YOU/finfamily-data/finfamily.db</string>
-      <key>PORT</key><string>3333</string>
+      <key>API_PORT</key><string>3132</string>
+      <key>WEB_PORT</key><string>3152</string>
     </dict>
     <key>RunAtLoad</key><true/>
     <key>KeepAlive</key><true/>
