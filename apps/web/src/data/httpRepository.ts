@@ -3,6 +3,8 @@ import {
   type AccountDto,
   type BudgetReportDto,
   type CardDto,
+  type PlanDetailDto,
+  type PlanDto,
   type StatementDto,
   type CategoryDto,
   type FinanceRepository,
@@ -56,6 +58,11 @@ export const httpRepository: FinanceRepository = {
   setCardRule: (cardId, rule) => request<void>(`/api/cards/${cardId}/rules`, send("POST", rule)),
   getStatement: (cardId, month) =>
     request<StatementDto>(`/api/cards/${cardId}/statement${month ? `?month=${month}` : ""}`),
+  listPlans: () => request<PlanDto[]>("/api/installment-plans"),
+  getPlan: (id) => request<PlanDetailDto>(`/api/installment-plans/${id}`),
+  createPlan: (input) => request<PlanDetailDto>("/api/installment-plans", send("POST", input)),
+  anticipatePlan: (id, input) => request<PlanDetailDto>(`/api/installment-plans/${id}/anticipate`, send("POST", input)),
+  cancelPlan: (id) => request<void>(`/api/installment-plans/${id}`, send("DELETE")),
   payStatement: (cardId, month, input) =>
     request<StatementDto>(`/api/cards/${cardId}/statements/${month}/payments`, send("POST", input)),
 };
